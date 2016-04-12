@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ray Tracer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tether/1.2.0/css/tether.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.2/css/bootstrap.min.css" integrity="sha384-y3tfxAZXuh4HwSYylfB+J125MxIs6mR5FOHamPBG064zB+AFeWH94NdvaCBm8qnd" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/blue/pace-theme-minimal.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="jumbotron">
+      <h1 class="display-3">Ray Tracer</h1>
+      <hr class="m-y-2">
+      <div class="col-xs-12">
+        <div class="btn-group pull-xs-left" role="group">
+          <button type="button" class="btn btn-primary btn-large" id="switch">Using CPU</button>
+          <button type="button" class="btn btn-info btn-large" id="fps">0 fps</button>
+        </div>
+        <div class="btn-group pull-xs-right" role="group">
+          <button type="button" class="btn btn-success btn-large" id='play'>Play</button>
+          <button type="button" class="btn btn-danger btn-large" id='stop'>Stop</button>
+        </div>
+      </div>
+      &nbsp;
+      <hr class="m-y-2">
+      <canvas id='c'></canvas>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.2.0/js/tether.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.2/js/bootstrap.min.js" integrity="sha384-vZ2WRJMwsjRMW/8U7i6PWi6AlO1L79snBrmgiDpgIWJ82z8eA5lenwvxbMV1PAh7" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
+  <script src="http://gpu.rocks/js/gpu.min.js?nocache"></script>
+  <script src="js/vector.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+body {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+.container {
+  min-width: 720px;
+}
+
+@media (min-width: 544px) {
+  .container {
+    min-width: 720px;
+  }
+
+  .jumbotron {
+    padding: 2rem 1rem;
+  }
+}
+
+.jumbotron {
+  text-align: center;
+  border-bottom: .05rem solid #e5e5e5;
+}
+.jumbotron .btn {
+  padding: .75rem 1.5rem;
+  font-size: 1.5rem;
+}
+
