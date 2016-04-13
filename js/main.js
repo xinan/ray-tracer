@@ -11,9 +11,7 @@ var ctx = c.getContext('2d'),
     data = ctx.getImageData(0, 0, width, height);
 
 // The Scene
-var scene = {};
-
-scene.camera = {
+var camera = {
   point: {
     x: 0,
     y: 1.8,
@@ -27,7 +25,7 @@ scene.camera = {
   }
 };
 
-scene.lights = [
+var lights = [
   {
     x: -30,
     y: -10,
@@ -35,7 +33,7 @@ scene.lights = [
   }
 ];
 
-scene.objects = [
+var objects = [
   {
     type: 'sphere',
     point: {
@@ -90,11 +88,7 @@ scene.objects = [
 ];
 
 // Throwing rays
-function render(scene) {
-  var camera = scene.camera,
-      objects = scene.objects,
-      lights = scene.lights;
-
+function render() {
   var eyeVector = Vector.unitVector(Vector.subtract(camera.vector, camera.point)),
       vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP)),
       vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector)),
@@ -120,7 +114,7 @@ function render(scene) {
 
       ray.vector = Vector.unitVector(Vector.add3(eyeVector, xcomp, ycomp));
 
-      color = trace(ray, scene, 0);
+      color = trace(ray, camera, lights, objects, 0);
       index = (x * 4) + (y * width * 4);
 
       data.data[index + 0] = color.x;
@@ -134,10 +128,10 @@ function render(scene) {
 }
 
 // Trace
-function trace(ray, scene, depth) {
-  if (depth > 1) return;
+function trace(ray, camera, lights, objects, depth) {
+  if (depth > 3) return;
 
-  var distObject = intersectScene(ray, scene);
+  var distObject = intersectScene(ray, camera, lights, objects);
 
   if (distObject[0] === Infinity) {
     return Vector.WHITE;
@@ -148,15 +142,15 @@ function trace(ray, scene, depth) {
 
   var pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
 
-  return surface(ray, scene, object, pointAtTime, sphereNormal(pointAtTime, object), depth);
+  return surface(ray, camera, lights, objects, object, pointAtTime, sphereNormal(pointAtTime, object), depth);
 }
 
 // Detecting collisions against all objects
-function intersectScene(ray, scene) {
+function intersectScene(ray, camera, lights, objects) {
   var closest = [Infinity, null];
 
-  for (var i = 0; i < scene.objects.length; i++) {
-    var object = scene.objects[i],
+  for (var i = 0; i < objects.length; i++) {
+    var object = objects[i],
         dist = sphereIntersection(ray, object);
 
     if (dist !== undefined && dist < closest[0]) {
@@ -183,16 +177,16 @@ function sphereNormal(pos, sphere) {
 }
 
 // Surface
-function surface(ray, scene, object, pointAtTime, normal, depth) {
+function surface(ray, camera, lights, objects, object, pointAtTime, normal, depth) {
   var b = object.color,
       c = Vector.ZERO,
       lambertAmount = 0;
 
   if (object.lambert) {
-    for (var i = 0; i < scene.lights.length; i++) {
-      var lightPoint = scene.lights[i];
+    for (var i = 0; i < lights.length; i++) {
+      var lightPoint = lights[i];
 
-      if (!isLightVisible(pointAtTime, scene, lightPoint)) {
+      if (!isLightVisible(pointAtTime, camera, lights, objects, lightPoint)) {
         continue;
       }
 
@@ -210,7 +204,7 @@ function surface(ray, scene, object, pointAtTime, normal, depth) {
       vector: Vector.reflectThrough(ray.vector, normal)
     };
 
-    var reflectedColor = trace(reflectedRay, scene, ++depth);
+    var reflectedColor = trace(reflectedRay, camera, lights, objects, ++depth);
 
     if (reflectedColor) {
       c = Vector.add(c, Vector.scale(reflectedColor, object.specular));
@@ -222,11 +216,11 @@ function surface(ray, scene, object, pointAtTime, normal, depth) {
   return Vector.add3(c, Vector.scale(b, lambertAmount * object.lambert), Vector.scale(b, object.ambient));
 }
 
-function isLightVisible(point, scene, light) {
+function isLightVisible(point, camera, lights, objects, light) {
   var distObject = intersectScene({
     point: point,
     vector: Vector.unitVector(Vector.subtract(point, light))
-  }, scene);
+  }, camera, lights, objects);
 
   return distObject[0] > -0.005;
 }
@@ -259,14 +253,14 @@ function tick() {
   planet1 += 0.1;
   planet2 += 0.2;
 
-  scene.objects[1].point.x = Math.sin(planet1) * 3.5;
-  scene.objects[1].point.z = -3 + (Math.cos(planet1) * 3.5);
+  objects[1].point.x = Math.sin(planet1) * 3.5;
+  objects[1].point.z = -3 + (Math.cos(planet1) * 3.5);
 
-  scene.objects[2].point.x = Math.sin(planet2) * 4;
-  scene.objects[2].point.z = -3 + (Math.cos(planet2) * 4);
+  objects[2].point.x = Math.sin(planet2) * 4;
+  objects[2].point.z = -3 + (Math.cos(planet2) * 4);
 
   FPS.updateFPS();
-  render(scene);
+  render(camera, lights, objects);
 
   if (playing) {
     requestAnimationFrame(tick);
@@ -292,7 +286,7 @@ function stop() {
   playing = false;
 }
 
-render(scene);
+render(camera, lights, objects);
 
 $('#switch').click(flip);
 $('#play').click(play);
