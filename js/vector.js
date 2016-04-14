@@ -65,7 +65,7 @@ function length(a) {
 Vector.unitVector = function(a) {
   return Vector.scale(a, 1 / Vector.length(a));
 };
-function normalize() {
+function normalize(a) {
   return scale(a, 1 / length(a));
 }
 
@@ -118,7 +118,7 @@ Vector.reflectThrough = function(a, normal) {
   var d = Vector.scale(normal, Vector.dotProduct(a, normal));
   return Vector.subtract(Vector.scale(d, 2), a);
 };
-function reflectThough(a, normal) {
+function reflectThrough(a, normal) {
   var d = scale(normal, dotProduct(a, normal));
   return subtract(scale(d, 2), a);
 }

@@ -1,228 +1,225 @@
-// Setup
-var c = document.getElementById('c'),
-    width = 640,
-    height = 480;
+var WIDTH = 640;
+var HEIGHT = 480;
 
-c.width = width;
-c.height = height;
-c.style.cssText = 'width: 640px; height: 480px;';
+var eyeVector = normalize(subtract(camera[1], camera[0])),
+    vpRight = normalize(crossProduct(eyeVector, VECTOR_UP)),
+    vpUp = normalize(crossProduct(vpRight, eyeVector)),
+    fovRadians = Math.PI * (camera[2][0] / 2) / 180,
+    heightWidthRatio = HEIGHT / WIDTH,
+    halfWidth = Math.tan(fovRadians),
+    halfHeight = heightWidthRatio * halfWidth,
+    cameraWidth = halfWidth * 2,
+    cameraHeight = halfHeight * 2,
+    pixelWidth = cameraWidth / (WIDTH - 1),
+    pixelHeight = cameraHeight / (HEIGHT - 1);
 
-var ctx = c.getContext('2d'),
-    data = ctx.getImageData(0, 0, width, height);
+var gpu = new GPU();
 
-// The Scene
-var camera = {
-  point: {
-    x: 0,
-    y: 1.8,
-    z: 10
+var options = {
+  dimensions: [WIDTH, HEIGHT],
+  debug: true,
+  graphical: true,
+  constants: {
+    height: HEIGHT,
+    width: WIDTH,
+    lightCount: lights.length,
+    objectCount: objects.length,
+    eyeVectorX: eyeVector[0],
+    eyeVectorY: eyeVector[1],
+    eyeVectorZ: eyeVector[2],
+    vpRightX: vpRight[0],
+    vpRightY: vpRight[1],
+    vpRightZ: vpRight[2],
+    vpUpX: vpUp[0],
+    vpUpY: vpUp[1],
+    vpUpZ: vpUp[2],
+    fovRadians: fovRadians,
+    heightWidthRatio: heightWidthRatio,
+    halfWidth: halfWidth,
+    halfHeight: halfHeight,
+    cameraWidth: cameraWidth,
+    cameraHeight: cameraHeight,
+    pixelWidth: pixelWidth,
+    pixelHeight: pixelHeight
   },
-  fieldOfView: 45,
-  vector: {
-    x: 0,
-    y: 3,
-    z: 0
-  }
+  mode: 'cpu'
 };
 
-var lights = [
-  {
-    x: -30,
-    y: -10,
-    z: 20
-  }
-];
+var kernel = gpu.createKernel(function(camera, lights, objects) {
+  var x = this.thread.x;
+  var y = this.constants.height - this.thread.y - 1;
+  var Infinity = 99999999;
+  var r = 0;
+  var g = 0;
+  var b = 0;
+  var a = 0;
+  var t;
+  var POINT = 0;
+  var VECTOR = 1;
+  var COLOR = 1;
+  var MISC = 2;
+  var PIE = 3;
+  var TYPE = 0;
+  var RADIUS = 1;
+  var SPECULAR = 0;
+  var DIFFUSE = 1;
+  var AMBIENT = 2;
+  var X = 0;
+  var Y = 1;
+  var Z = 2;
+  var R = 0;
+  var G = 1;
+  var B = 2;
+  var tempX;
+  var tempY;
+  var tempZ;
+  var temp;
 
-var objects = [
-  {
-    type: 'sphere',
-    point: {
-      x: 0,
-      y: 3.5,
-      z: -3
-    },
-    color: {
-      x: 155,
-      y: 200,
-      z: 155
-    },
-    specular: 0.2,
-    lambert: 0.7,
-    ambient: 0.1,
-    radius: 3
-  },
-  {
-    type: 'sphere',
-    point: {
-      x: -4,
-      y: 2,
-      z: -1
-    },
-    color: {
-      x: 155,
-      y: 155,
-      z: 155
-    },
-    specular: 0.1,
-    lambert: 0.9,
-    ambient: 0.0,
-    radius: 0.2
-  },
-  {
-    type: 'sphere',
-    point: {
-      x: -4,
-      y: 3,
-      z: -1
-    },
-    color: {
-      x: 255,
-      y: 255,
-      z: 255
-    },
-    specular: 0.2,
-    lambert: 0.7,
-    ambient: 0.1,
-    radius: 0.1
+  function dotProduct(ax, ay, az, bx, by, bz) {
+    return ax * bx + ay * by + az * bz;
   }
-];
 
-// Throwing rays
+  function length(ax, ay, az) {
+    return Math.sqrt(ax * ax + ay * ay + az * az);
+  }
+
+  function sphereIntersection(rayPointX, rayPointY, rayPointZ, rayVectorX, rayVectorY, rayVectorZ, spherePointX, spherePointY, spherePointZ, sphereRadius) {
+    var eyeToCenterX = spherePointX - rayPointX;
+    var eyeToCenterY = spherePointY - rayPointY;
+    var eyeToCenterZ = spherePointZ - rayPointZ;
+    var v = eyeToCenterX * rayVectorX + eyeToCenterY * rayVectorY + eyeToCenterZ * rayVectorZ;
+    var eoDot = eyeToCenterX * eyeToCenterX + eyeToCenterY * eyeToCenterY + eyeToCenterZ * eyeToCenterZ;
+    var discriminant = (sphereRadius * sphereRadius) - eoDot + (v * v);
+
+    if (discriminant > 0) {
+      return v - Math.sqrt(discriminant);
+    } else {
+      return -1;
+    }
+  }
+
+  t = x * this.constants.pixelWidth - this.constants.halfWidth;
+  var xCompX = this.constants.vpRightX * t;
+  var xCompY = this.constants.vpRightY * t;
+  var xCompZ = this.constants.vpRightZ * t;
+
+  t = y * this.constants.pixelHeight - this.constants.halfHeight;
+  var yCompX = this.constants.vpUpX * t;
+  var yCompY = this.constants.vpUpY * t;
+  var yCompZ = this.constants.vpUpZ * t;
+
+  tempX = this.constants.eyeVectorX + xCompX + yCompX;
+  tempY = this.constants.eyeVectorY + xCompY + yCompY;
+  tempZ = this.constants.eyeVectorZ + xCompZ + yCompZ;
+  temp = length(tempX, tempY, tempZ);
+
+  var rayPointX = camera[POINT][X];
+  var rayPointY = camera[POINT][Y];
+  var rayPointZ = camera[POINT][Z];
+  var rayVectorX = tempX / temp;
+  var rayVectorY = tempY / temp;
+  var rayVectorZ = tempZ / temp;
+
+  var dist;
+  var closest = Infinity;
+  var objectIdx = -1;
+
+  for (var n = 0; n < this.constants.objectCount; n++) {
+    dist = sphereIntersection(rayPointX, rayPointY, rayPointZ, rayVectorX, rayVectorY, rayVectorZ, objects[n][POINT][X], objects[n][POINT][Y], objects[n][POINT][Z], objects[n][MISC][RADIUS]);
+
+    if (dist > 0 && dist < closest) {
+      closest = dist;
+      objectIdx = n;
+    }
+  }
+
+  var idx = objectIdx;
+
+  if (closest !== Infinity) {
+    a = 255;
+
+    tempX = rayVectorX * closest;
+    tempY = rayVectorY * closest;
+    tempZ = rayVectorZ * closest;
+    var pointAtTimeX = rayPointX + tempX;
+    var pointAtTimeY = rayPointY + tempY;
+    var pointAtTimeZ = rayPointZ + tempZ;
+
+    tempX = pointAtTimeX - objects[idx][POINT][X];
+    tempY = pointAtTimeY - objects[idx][POINT][Y];
+    tempZ = pointAtTimeZ - objects[idx][POINT][Z];
+    temp = length(tempX, tempY, tempZ);
+
+    var sphereNormalX = tempX / temp;
+    var sphereNormalY = tempY / temp;
+    var sphereNormalZ = tempZ / temp;
+
+    var colorR = objects[idx][COLOR][R];
+    var colorG = objects[idx][COLOR][G];
+    var colorB = objects[idx][COLOR][B];
+
+    var lambert = 0;
+
+    for (var n = 0; n < this.constants.lightCount; n++) {
+      tempX = pointAtTimeX - lights[n][X];
+      tempY = pointAtTimeY - lights[n][Y];
+      tempZ = pointAtTimeZ - lights[n][Z];
+      temp = length(tempX, tempY, tempZ);
+
+      var lightVectorX = tempX / temp;
+      var lightVectorY = tempY / temp;
+      var lightVectorZ = tempZ / temp;
+
+      closest = Infinity;
+      objectIdx = -1;
+
+      for (var m = 0; m < this.constants.objectCount; m++) {
+        dist = sphereIntersection(lights[n][X], lights[n][Y], lights[n][Z], lightVectorX, lightVectorY, lightVectorZ, objects[m][POINT][X], objects[m][POINT][Y], objects[m][POINT][Z], objects[m][MISC][RADIUS]);
+
+        if (dist > 0 && dist < closest) {
+          closest = dist;
+          objectIdx = m;
+        }
+      }
+
+      if (objectIdx === idx) {
+        tempX = lights[n][X] - pointAtTimeX;
+        tempY = lights[n][Y] - pointAtTimeY;
+        tempZ = lights[n][Z] - pointAtTimeZ;
+
+        temp = length(tempX, tempY, tempZ);
+        tempX = tempX / temp;
+        tempY = tempY / temp;
+        tempZ = tempZ / temp;
+
+        var contribution = dotProduct(tempX, tempY, tempZ, sphereNormalX, sphereNormalY, sphereNormalZ);
+        if (contribution > 0) {
+          lambert += contribution;
+        }
+      }
+    }
+
+    lambert = Math.min(1, lambert);
+
+    t = lambert * objects[idx][PIE][DIFFUSE];
+    r += colorR * t;
+    g += colorG * t;
+    b += colorB * t;
+
+    t = objects[idx][PIE][AMBIENT];
+    r += colorR * t;
+    g += colorG * t;
+    b += colorB * t;
+  }
+
+  this.color(r / 255, g / 255, b / 255, a / 255);
+}, options);
+
 function render() {
-  var eyeVector = Vector.unitVector(Vector.subtract(camera.vector, camera.point)),
-      vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP)),
-      vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector)),
-      fovRadians = Math.PI * (camera.fieldOfView / 2) / 180,
-      heightWidthRatio = height / width,
-      halfWidth = Math.tan(fovRadians),
-      halfHeight = heightWidthRatio * halfWidth,
-      cameraWidth = halfWidth * 2,
-      cameraHeight = halfHeight * 2,
-      pixelWidth = cameraWidth / (width - 1),
-      pixelHeight = cameraHeight / (height - 1);
-
-  var index, color;
-
-  var ray = {
-    point: camera.point
-  };
-
-  for (var x = 0; x < width; x++) {
-    for (var y = 0; y < height; y++) {
-      var xcomp = Vector.scale(vpRight, (x * pixelWidth) - halfWidth),
-          ycomp = Vector.scale(vpUp, (y * pixelHeight) - halfHeight);
-
-      ray.vector = Vector.unitVector(Vector.add3(eyeVector, xcomp, ycomp));
-
-      color = trace(ray, camera, lights, objects, 0);
-      index = (x * 4) + (y * width * 4);
-
-      data.data[index + 0] = color.x;
-      data.data[index + 1] = color.y;
-      data.data[index + 2] = color.z;
-      data.data[index + 3] = color === Vector.WHITE ? 0 : 255;
-    }
-  }
-
-  ctx.putImageData(data, 0, 0);
-}
-
-// Trace
-function trace(ray, camera, lights, objects, depth) {
-  if (depth > 3) return;
-
-  var distObject = intersectScene(ray, camera, lights, objects);
-
-  if (distObject[0] === Infinity) {
-    return Vector.WHITE;
-  }
-
-  var dist = distObject[0],
-      object = distObject[1];
-
-  var pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
-
-  return surface(ray, camera, lights, objects, object, pointAtTime, sphereNormal(pointAtTime, object), depth);
-}
-
-// Detecting collisions against all objects
-function intersectScene(ray, camera, lights, objects) {
-  var closest = [Infinity, null];
-
-  for (var i = 0; i < objects.length; i++) {
-    var object = objects[i],
-        dist = sphereIntersection(ray, object);
-
-    if (dist !== undefined && dist < closest[0]) {
-      closest = [dist, object];
-    }
-  }
-
-  return closest;
-}
-
-function sphereIntersection(ray, sphere) {
-  var eyeToCenter = Vector.subtract(sphere.point, ray.point),
-      v = Vector.dotProduct(eyeToCenter, ray.vector),
-      eoDot = Vector.dotProduct(eyeToCenter, eyeToCenter),
-      discriminant = (sphere.radius * sphere.radius) - eoDot + (v * v);
-
-  if (discriminant > 0) {
-    return v - Math.sqrt(discriminant);
-  }
-}
-
-function sphereNormal(pos, sphere) {
-  return Vector.unitVector(Vector.subtract(pos, sphere.point));
-}
-
-// Surface
-function surface(ray, camera, lights, objects, object, pointAtTime, normal, depth) {
-  var b = object.color,
-      c = Vector.ZERO,
-      lambertAmount = 0;
-
-  if (object.lambert) {
-    for (var i = 0; i < lights.length; i++) {
-      var lightPoint = lights[i];
-
-      if (!isLightVisible(pointAtTime, camera, lights, objects, lightPoint)) {
-        continue;
-      }
-
-      var contribution = Vector.dotProduct(Vector.unitVector(Vector.subtract(lightPoint, pointAtTime)), normal);
-
-      if (contribution > 0) {
-        lambertAmount += contribution;
-      }
-    }
-  }
-
-  if (object.specular) {
-    var reflectedRay = {
-      point: pointAtTime,
-      vector: Vector.reflectThrough(ray.vector, normal)
-    };
-
-    var reflectedColor = trace(reflectedRay, camera, lights, objects, ++depth);
-
-    if (reflectedColor) {
-      c = Vector.add(c, Vector.scale(reflectedColor, object.specular));
-    }
-  }
-
-  lambertAmount = Math.min(1, lambertAmount);
-
-  return Vector.add3(c, Vector.scale(b, lambertAmount * object.lambert), Vector.scale(b, object.ambient));
-}
-
-function isLightVisible(point, camera, lights, objects, light) {
-  var distObject = intersectScene({
-    point: point,
-    vector: Vector.unitVector(Vector.subtract(point, light))
-  }, camera, lights, objects);
-
-  return distObject[0] > -0.005;
+  kernel(camera, lights, objects);
+  var parent = document.getElementById('parent');
+  var canvas = document.getElementsByTagName('canvas')[0];
+  parent.replaceChild(kernel.getCanvas(), canvas);
 }
 
 // A little fun magic
@@ -253,17 +250,18 @@ function tick() {
   planet1 += 0.1;
   planet2 += 0.2;
 
-  objects[1].point.x = Math.sin(planet1) * 3.5;
-  objects[1].point.z = -3 + (Math.cos(planet1) * 3.5);
+  objects[1][0][0] = Math.sin(planet1) * 3.5;
+  objects[1][0][2] = -3 + (Math.cos(planet1) * 3.5);
 
-  objects[2].point.x = Math.sin(planet2) * 4;
-  objects[2].point.z = -3 + (Math.cos(planet2) * 4);
+  objects[2][0][0] = Math.sin(planet2) * 4;
+  objects[2][0][2] = -3 + (Math.cos(planet2) * 4);
 
   FPS.updateFPS();
-  render(camera, lights, objects);
+  render();
 
   if (playing) {
-    requestAnimationFrame(tick);
+    // requestAnimationFrame(tick);
+    setTimeout(tick, 1);
   }
 }
 
@@ -286,31 +284,8 @@ function stop() {
   playing = false;
 }
 
-render(camera, lights, objects);
+render();
 
 $('#switch').click(flip);
 $('#play').click(play);
 $('#stop').click(stop);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
