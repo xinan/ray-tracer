@@ -13,39 +13,43 @@ var eyeVector = normalize(subtract(camera[1], camera[0])),
     pixelWidth = cameraWidth / (WIDTH - 1),
     pixelHeight = cameraHeight / (HEIGHT - 1);
 
-var gpu = new GPU();
+function createRenderer(mode) {
+  var gpu = new GPU();
 
-var options = {
-  dimensions: [WIDTH, HEIGHT],
-  debug: true,
-  graphical: true,
-  constants: {
-    height: HEIGHT,
-    width: WIDTH,
-    lightCount: lights.length,
-    objectCount: objects.length,
-    eyeVectorX: eyeVector[0],
-    eyeVectorY: eyeVector[1],
-    eyeVectorZ: eyeVector[2],
-    vpRightX: vpRight[0],
-    vpRightY: vpRight[1],
-    vpRightZ: vpRight[2],
-    vpUpX: vpUp[0],
-    vpUpY: vpUp[1],
-    vpUpZ: vpUp[2],
-    fovRadians: fovRadians,
-    heightWidthRatio: heightWidthRatio,
-    halfWidth: halfWidth,
-    halfHeight: halfHeight,
-    cameraWidth: cameraWidth,
-    cameraHeight: cameraHeight,
-    pixelWidth: pixelWidth,
-    pixelHeight: pixelHeight
-  },
-  mode: 'cpu'
-};
+  var options = {
+    dimensions: [WIDTH, HEIGHT],
+    debug: true,
+    graphical: true,
+    constants: {
+      height: HEIGHT,
+      width: WIDTH,
+      lightCount: lights.length,
+      objectCount: objects.length,
+      eyeVectorX: eyeVector[0],
+      eyeVectorY: eyeVector[1],
+      eyeVectorZ: eyeVector[2],
+      vpRightX: vpRight[0],
+      vpRightY: vpRight[1],
+      vpRightZ: vpRight[2],
+      vpUpX: vpUp[0],
+      vpUpY: vpUp[1],
+      vpUpZ: vpUp[2],
+      fovRadians: fovRadians,
+      heightWidthRatio: heightWidthRatio,
+      halfWidth: halfWidth,
+      halfHeight: halfHeight,
+      cameraWidth: cameraWidth,
+      cameraHeight: cameraHeight,
+      pixelWidth: pixelWidth,
+      pixelHeight: pixelHeight
+    },
+    mode: mode
+  };
 
-var kernel = gpu.createKernel(function(camera, lights, objects) {
+  return gpu.createKernel(rayTracing, options);
+}
+
+function rayTracing(camera, lights, objects) {
   var x = this.thread.x;
   var y = this.constants.height - this.thread.y - 1;
   var Infinity = 99999999;
@@ -213,9 +217,13 @@ var kernel = gpu.createKernel(function(camera, lights, objects) {
   }
 
   this.color(r / 255, g / 255, b / 255, a / 255);
-}, options);
+}
+
+var cpuRenderer = createRenderer('cpu');
+var gpuRenderer = createRenderer('gpu');
 
 function render() {
+  var kernel = usingGPU ? gpuRenderer : cpuRenderer;
   kernel(camera, lights, objects);
   var parent = document.getElementById('parent');
   var canvas = document.getElementsByTagName('canvas')[0];
