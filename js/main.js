@@ -268,9 +268,21 @@ function render() {
 }
 
 // A little fun magic
-var planet1 = 0,
-    planet2 = 0,
-    planet3 = 0;
+var earthR = 0,
+    earthG = 0,
+    earthB = 0,
+    moon1 = 0,
+    moon1R = 0,
+    moon1G = 0,
+    moon1B = 0,
+    moon2 = 0,
+    moon2R = 0,
+    moon2G = 0,
+    moon2B = 0,
+    moon3 = 0,
+    moon3R = 0,
+    moon3G = 0,
+    moon3B = 0;
 
 var playing = false;
 var usingGPU = false;
@@ -293,20 +305,49 @@ var FPS = {
 };
 
 function tick() {
-  planet1 += Math.random() / 10;
-  planet2 += Math.random() / 10;
-  planet3 += Math.random() / 10;
+  earthR += Math.random() / 10;
+  earthG += Math.random() / 10;
+  earthB += Math.random() / 10;
+  moon1R += Math.random() / 10;
+  moon1G += Math.random() / 10;
+  moon1B += Math.random() / 10;
+  moon2R += Math.random() / 10;
+  moon2G += Math.random() / 10;
+  moon2B += Math.random() / 10;
+  moon3R += Math.random() / 10;
+  moon3G += Math.random() / 10;
+  moon3G += Math.random() / 10;
 
-  objects[1][POINT][X] = Math.cos(planet1) * 1.5;
-  objects[1][POINT][Y] = -Math.cos(planet1) * 2.598076211353316;
-  objects[1][POINT][Z] = Math.sin(planet1) * 3;
+  moon1 += Math.random() / 10;
+  moon2 += Math.random() / 10;
+  moon3 += Math.random() / 10;
 
-  objects[2][POINT][X] = Math.cos(planet2) * 1.5;
-  objects[2][POINT][Y] = Math.cos(planet2) * 2.598076211353316;
-  objects[2][POINT][Z] = -Math.sin(planet2) * 3;
+  objects[0][COLOR][R] = (Math.sin(earthR)) * 64 + 128;
+  objects[0][COLOR][G] = (Math.cos(earthG)) * 64 + 128;
+  objects[0][COLOR][B] = (-Math.cos(earthB)) * 64 + 128;
 
-  objects[3][POINT][X] = -Math.cos(planet3) * 3;
-  objects[3][POINT][Z] = Math.sin(planet3) * 3;
+  objects[1][COLOR][R] = (-Math.cos(moon1R)) * 64 + 128;
+  objects[1][COLOR][G] = (-Math.sin(moon1G)) * 64 + 128;
+  objects[1][COLOR][B] = (Math.sin(moon1B)) * 64 + 128;
+
+  objects[2][COLOR][R] = (-Math.sin(moon2R)) * 64 + 128;
+  objects[2][COLOR][G] = (-Math.cos(moon2G)) * 64 + 128;
+  objects[2][COLOR][B] = (Math.cos(moon2B)) * 64 + 128;
+
+  objects[3][COLOR][R] = (Math.cos(moon3R)) * 64 + 128;
+  objects[3][COLOR][G] = (Math.sin(moon3G)) * 64 + 128;
+  objects[3][COLOR][B] = (-Math.sin(moon3B)) * 64 + 128;
+
+  objects[1][POINT][X] = Math.cos(moon1) * 1.5;
+  objects[1][POINT][Y] = -Math.cos(moon1) * 2.598076211353316;
+  objects[1][POINT][Z] = Math.sin(moon1) * 3;
+
+  objects[2][POINT][X] = Math.cos(moon2) * 1.5;
+  objects[2][POINT][Y] = Math.cos(moon2) * 2.598076211353316;
+  objects[2][POINT][Z] = -Math.sin(moon2) * 3;
+
+  objects[3][POINT][X] = -Math.cos(moon3) * 3;
+  objects[3][POINT][Z] = Math.sin(moon3) * 3;
 
   FPS.updateFPS();
   render();

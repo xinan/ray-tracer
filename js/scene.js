@@ -35,9 +35,9 @@ var objects = [
       0       // point.z
     ],
     [
-      31,    // color.x
-      139,    // color.y
-      227     // color.z
+      128,    // color.x
+      192,    // color.y
+      64      // color.z
     ],
     [
       SPHERE, // type
@@ -57,9 +57,9 @@ var objects = [
       0       // point.z
     ],
     [
-      255,    // color.x
-      204,    // color.y
-      136     // color.z
+      64,    // color.x
+      128,    // color.y
+      128     // color.z
     ],
     [
       SPHERE, // type
@@ -79,9 +79,9 @@ var objects = [
       0      // point.z
     ],
     [
-      255,    // color.x
-      204,    // color.y
-      136     // color.z
+      128,    // color.x
+      64,    // color.y
+      192     // color.z
     ],
     [
       SPHERE, // type
@@ -101,9 +101,9 @@ var objects = [
       0      // point.z
     ],
     [
-      255,    // color.x
-      204,    // color.y
-      136     // color.z
+      192,    // color.x
+      128,    // color.y
+      128     // color.z
     ],
     [
       SPHERE, // type
