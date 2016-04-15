@@ -310,11 +310,14 @@ var earthR = 0,
 
 var playing = false;
 var usingGPU = false;
+var throttle = true;
+var fps = $('#fps');
+fps.click(flop);
 
 var FPS = {
   startTime : 0,
   frameNumber : 0,
-  display: $('#fps'),
+  display: fps,
   updateFPS : function() {
     this.frameNumber++;
     var d = new Date().getTime(),
@@ -377,18 +380,21 @@ function tick() {
   render();
 
   if (playing) {
-    requestAnimationFrame(tick);
-    // setTimeout(tick, 1);
+    if (throttle) {
+      requestAnimationFrame(tick);
+    } else {
+      setTimeout(tick, 1);
+    }
   }
 }
 
 function flip(e) {
   if (usingGPU) {
     usingGPU = false;
-    $(e.target).text("Using CPU");
+    $(e.target).text("CPU");
   } else {
     usingGPU = true;
-    $(e.target).text("Using GPU");
+    $(e.target).text("GPU");
   }
 }
 
@@ -405,6 +411,10 @@ function toggle(e) {
     playing = true;
     tick();
   }
+}
+
+function flop() {
+  throttle = !throttle;
 }
 
 function antiAliasing(e) {
