@@ -63,7 +63,7 @@ var objects = [
     ],
     [
       SPHERE, // type
-      0.2,    // radius
+      0.3,    // radius
       0       // dummy
     ],
     [
@@ -85,7 +85,7 @@ var objects = [
     ],
     [
       SPHERE, // type
-      0.2,    // radius
+      0.3,    // radius
       0       // dummy
     ],
     [
@@ -107,7 +107,7 @@ var objects = [
     ],
     [
       SPHERE, // type
-      0.2,    // radius
+      0.3,    // radius
       0       // dummy
     ],
     [
