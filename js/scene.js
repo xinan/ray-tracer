@@ -67,7 +67,7 @@ var objects = [
       0       // dummy
     ],
     [
-      0.2,    // specular
+      0.1,    // specular
       0.9,    // diffuse
       0.1     // ambient
     ]
@@ -89,7 +89,7 @@ var objects = [
       0       // dummy
     ],
     [
-      0.2,    // specular
+      0.1,    // specular
       0.9,    // diffuse
       0.1     // ambient
     ]
@@ -111,7 +111,7 @@ var objects = [
       0       // dummy
     ],
     [
-      0.2,    // specular
+      0.1,    // specular
       0.9,    // diffuse
       0.1     // ambient
     ]
