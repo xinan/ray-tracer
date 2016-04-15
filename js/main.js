@@ -1,5 +1,6 @@
-var WIDTH = 640;
-var HEIGHT = 480;
+var WIDTH = 800;
+var HEIGHT = 600;
+var DEPTH = 3;
 
 var eyeVector = normalize(subtract(camera[1], camera[0])),
     vpRight = normalize(crossProduct(eyeVector, VECTOR_UP)),
@@ -23,6 +24,7 @@ function createRenderer(mode) {
     constants: {
       height: HEIGHT,
       width: WIDTH,
+      depth: DEPTH,
       lightCount: lights.length,
       objectCount: objects.length,
       eyeVectorX: eyeVector[0],
@@ -50,14 +52,6 @@ function createRenderer(mode) {
 }
 
 function rayTracing(camera, lights, objects) {
-  var x = this.thread.x;
-  var y = this.constants.height - this.thread.y - 1;
-  var Infinity = 99999999;
-  var r = 0;
-  var g = 0;
-  var b = 0;
-  var a = 0;
-  var t;
   var POINT = 0;
   var VECTOR = 1;
   var COLOR = 1;
@@ -74,6 +68,17 @@ function rayTracing(camera, lights, objects) {
   var R = 0;
   var G = 1;
   var B = 2;
+
+  var x = this.thread.x;
+  var y = this.constants.height - this.thread.y - 1;
+  var Infinity = 99999999;
+  var r = 0;
+  var g = 0;
+  var b = 0;
+  var a = 0;
+  var t;
+  var n;
+  var m;
   var tempX;
   var tempY;
   var tempZ;
@@ -98,7 +103,7 @@ function rayTracing(camera, lights, objects) {
     if (discriminant > 0) {
       return v - Math.sqrt(discriminant);
     } else {
-      return -1;
+      return 99999999;
     }
   }
 
@@ -123,107 +128,122 @@ function rayTracing(camera, lights, objects) {
   var rayVectorX = tempX / temp;
   var rayVectorY = tempY / temp;
   var rayVectorZ = tempZ / temp;
+  var specular = 1;
 
-  var dist;
-  var closest = Infinity;
-  var objectIdx = -1;
+  for (var i = 0; i < this.constants.depth; i++) {
 
-  for (var n = 0; n < this.constants.objectCount; n++) {
-    dist = sphereIntersection(rayPointX, rayPointY, rayPointZ, rayVectorX, rayVectorY, rayVectorZ, objects[n][POINT][X], objects[n][POINT][Y], objects[n][POINT][Z], objects[n][MISC][RADIUS]);
+    var dist;
+    var closest = Infinity;
+    var objectIdx = -1;
 
-    if (dist > 0 && dist < closest) {
-      closest = dist;
-      objectIdx = n;
+    for (n = 0; n < this.constants.objectCount; n++) {
+      dist = sphereIntersection(rayPointX, rayPointY, rayPointZ, rayVectorX, rayVectorY, rayVectorZ, objects[n][POINT][X], objects[n][POINT][Y], objects[n][POINT][Z], objects[n][MISC][RADIUS]);
+
+      if (dist < closest) {
+        closest = dist;
+        objectIdx = n;
+      }
     }
-  }
 
-  var idx = objectIdx;
+    var idx = objectIdx;
 
-  if (closest !== Infinity) {
-    a = 255;
+    if (idx != -1) {
+      a = 255;
 
-    tempX = rayVectorX * closest;
-    tempY = rayVectorY * closest;
-    tempZ = rayVectorZ * closest;
-    var pointAtTimeX = rayPointX + tempX;
-    var pointAtTimeY = rayPointY + tempY;
-    var pointAtTimeZ = rayPointZ + tempZ;
+      tempX = rayVectorX * closest;
+      tempY = rayVectorY * closest;
+      tempZ = rayVectorZ * closest;
+      var pointAtTimeX = rayPointX + tempX;
+      var pointAtTimeY = rayPointY + tempY;
+      var pointAtTimeZ = rayPointZ + tempZ;
 
-    tempX = pointAtTimeX - objects[idx][POINT][X];
-    tempY = pointAtTimeY - objects[idx][POINT][Y];
-    tempZ = pointAtTimeZ - objects[idx][POINT][Z];
-    temp = length(tempX, tempY, tempZ);
-
-    var sphereNormalX = tempX / temp;
-    var sphereNormalY = tempY / temp;
-    var sphereNormalZ = tempZ / temp;
-
-    var colorR = objects[idx][COLOR][R];
-    var colorG = objects[idx][COLOR][G];
-    var colorB = objects[idx][COLOR][B];
-
-    var lambert = 0;
-
-    for (var n = 0; n < this.constants.lightCount; n++) {
-      tempX = pointAtTimeX - lights[n][X];
-      tempY = pointAtTimeY - lights[n][Y];
-      tempZ = pointAtTimeZ - lights[n][Z];
+      tempX = pointAtTimeX - objects[idx][POINT][X];
+      tempY = pointAtTimeY - objects[idx][POINT][Y];
+      tempZ = pointAtTimeZ - objects[idx][POINT][Z];
       temp = length(tempX, tempY, tempZ);
 
-      var lightVectorX = tempX / temp;
-      var lightVectorY = tempY / temp;
-      var lightVectorZ = tempZ / temp;
+      var sphereNormalX = tempX / temp;
+      var sphereNormalY = tempY / temp;
+      var sphereNormalZ = tempZ / temp;
 
-      closest = Infinity;
-      objectIdx = -1;
+      var colorR = objects[idx][COLOR][R];
+      var colorG = objects[idx][COLOR][G];
+      var colorB = objects[idx][COLOR][B];
 
-      for (var m = 0; m < this.constants.objectCount; m++) {
-        dist = sphereIntersection(lights[n][X], lights[n][Y], lights[n][Z], lightVectorX, lightVectorY, lightVectorZ, objects[m][POINT][X], objects[m][POINT][Y], objects[m][POINT][Z], objects[m][MISC][RADIUS]);
+      var lambert = 0;
 
-        if (dist > 0 && dist < closest) {
-          closest = dist;
-          objectIdx = m;
-        }
-      }
-
-      if (objectIdx === idx) {
-        tempX = lights[n][X] - pointAtTimeX;
-        tempY = lights[n][Y] - pointAtTimeY;
-        tempZ = lights[n][Z] - pointAtTimeZ;
-
+      for (n = 0; n < this.constants.lightCount; n++) {
+        tempX = pointAtTimeX - lights[n][X];
+        tempY = pointAtTimeY - lights[n][Y];
+        tempZ = pointAtTimeZ - lights[n][Z];
         temp = length(tempX, tempY, tempZ);
-        tempX = tempX / temp;
-        tempY = tempY / temp;
-        tempZ = tempZ / temp;
 
-        var contribution = dotProduct(tempX, tempY, tempZ, sphereNormalX, sphereNormalY, sphereNormalZ);
-        if (contribution > 0) {
-          lambert += contribution;
+        var lightVectorX = tempX / temp;
+        var lightVectorY = tempY / temp;
+        var lightVectorZ = tempZ / temp;
+
+        closest = Infinity;
+        objectIdx = -1;
+
+        for (m = 0; m < this.constants.objectCount; m++) {
+          dist = sphereIntersection(lights[n][X], lights[n][Y], lights[n][Z], lightVectorX, lightVectorY, lightVectorZ, objects[m][POINT][X], objects[m][POINT][Y], objects[m][POINT][Z], objects[m][MISC][RADIUS]);
+
+          if (dist > 0 && dist < closest) {
+            closest = dist;
+            objectIdx = m;
+          }
+        }
+
+        if (objectIdx === idx) {
+          tempX = lights[n][X] - pointAtTimeX;
+          tempY = lights[n][Y] - pointAtTimeY;
+          tempZ = lights[n][Z] - pointAtTimeZ;
+
+          temp = length(tempX, tempY, tempZ);
+          tempX = tempX / temp;
+          tempY = tempY / temp;
+          tempZ = tempZ / temp;
+
+          var contribution = dotProduct(tempX, tempY, tempZ, sphereNormalX, sphereNormalY, sphereNormalZ);
+          if (contribution > 0) {
+            lambert += contribution;
+          }
         }
       }
+
+      lambert = Math.min(1, lambert);
+
+      t = lambert * objects[idx][PIE][DIFFUSE] * specular + objects[idx][PIE][AMBIENT] * specular;
+      r += colorR * t;
+      g += colorG * t;
+      b += colorB * t;
+
+      specular = objects[idx][PIE][SPECULAR];
+
+      rayPointX = pointAtTimeX;
+      rayPointY = pointAtTimeY;
+      rayPointZ = pointAtTimeZ;
+
+      t = 2 * dotProduct(rayVectorX, rayVectorY, rayVectorZ, sphereNormalX, sphereNormalY, sphereNormalZ);
+      rayVectorX = sphereNormalX * t - rayVectorX;
+      rayVectorY = sphereNormalY * t - rayVectorY;
+      rayVectorZ = sphereNormalZ * t - rayVectorZ;
+
+    } else {
+      break;
     }
-
-    lambert = Math.min(1, lambert);
-
-    t = lambert * objects[idx][PIE][DIFFUSE];
-    r += colorR * t;
-    g += colorG * t;
-    b += colorB * t;
-
-    t = objects[idx][PIE][AMBIENT];
-    r += colorR * t;
-    g += colorG * t;
-    b += colorB * t;
   }
 
   this.color(r / 255, g / 255, b / 255, a / 255);
 }
 
-var cpuRenderer = createRenderer('cpu');
-var gpuRenderer = createRenderer('gpu');
+var cpu = createRenderer('cpu');
+var gpu = createRenderer('gpu');
+cpu(camera, lights, objects);
+gpu(camera, lights, objects);
 
 function render() {
-  var kernel = usingGPU ? gpuRenderer : cpuRenderer;
+  var kernel = usingGPU ? gpu : cpu;
   kernel(camera, lights, objects);
   var parent = document.getElementById('parent');
   var canvas = document.getElementsByTagName('canvas')[0];
@@ -268,8 +288,8 @@ function tick() {
   render();
 
   if (playing) {
-    // requestAnimationFrame(tick);
-    setTimeout(tick, 1);
+    requestAnimationFrame(tick);
+    // setTimeout(tick, 1);
   }
 }
 
