@@ -345,22 +345,22 @@ var FPS = {
 };
 
 function tick() {
-  earthR += Math.random() / 10;
-  earthG += Math.random() / 10;
-  earthB += Math.random() / 10;
-  moon1R += Math.random() / 10;
-  moon1G += Math.random() / 10;
-  moon1B += Math.random() / 10;
-  moon2R += Math.random() / 10;
-  moon2G += Math.random() / 10;
-  moon2B += Math.random() / 10;
-  moon3R += Math.random() / 10;
-  moon3G += Math.random() / 10;
-  moon3G += Math.random() / 10;
+  earthR += Math.random() / 51;
+  earthG += Math.random() / 47;
+  earthB += Math.random() / 43;
+  moon1R += Math.random() / 41;
+  moon1G += Math.random() / 37;
+  moon1B += Math.random() / 31;
+  moon2R += Math.random() / 29;
+  moon2G += Math.random() / 23;
+  moon2B += Math.random() / 19;
+  moon3R += Math.random() / 17;
+  moon3G += Math.random() / 13;
+  moon3G += Math.random() / 11;
 
-  moon1 += Math.random() / 10;
-  moon2 += Math.random() / 10;
-  moon3 += Math.random() / 10;
+  moon1 += Math.random() / 11;
+  moon2 += Math.random() / 13;
+  moon3 += Math.random() / 17;
 
   objects[0][COLOR][R] = (Math.sin(earthR)) * 64 + 128;
   objects[0][COLOR][G] = (Math.cos(earthG)) * 64 + 128;
@@ -456,4 +456,5 @@ $('.btn-antialiasing').click(antiAliasing);
 $('.btn-resolution').click(changeSize);
 $('.btn-bounces').click(changeBounces);
 
-$('#footer').text('Copyright \u00A9 2014-' + new Date().getFullYear() + ' Liu Xinan');
+var year = new Date().getFullYear();
+$('#footer').text('Copyright \u00A9 2016' + (year !== 2016 ? '-' + year : '' ) + ' Liu Xinan');
