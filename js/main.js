@@ -322,7 +322,7 @@ var earthR = 0,
     moon3B = 0;
 
 var playing = false;
-var usingGPU = false;
+var usingGPU = true;
 var throttle = true;
 var fps = $('#fps');
 fps.click(flop);
