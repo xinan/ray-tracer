@@ -288,9 +288,22 @@ function flip(e) {
   }
 }
 
-function play() {
-  playing = true;
-  tick();
+function toggle(e) {
+  if (playing) {
+    $(e.target).text("Play");
+    $(e.target).removeClass("btn-danger");
+    $(e.target).addClass("btn-success");
+  } else {
+    $(e.target).text("Stop");
+    $(e.target).removeClass("btn-success");
+    $(e.target).addClass("btn-danger");
+    tick();
+  }
+  playing = !playing;
+}
+
+function antialiasing(e) {
+
 }
 
 function stop() {
@@ -300,8 +313,7 @@ function stop() {
 render(scene);
 
 $('#switch').click(flip);
-$('#play').click(play);
-$('#stop').click(stop);
+$('#toggle').click(toggle);
 
 
 

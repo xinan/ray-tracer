@@ -5,6 +5,7 @@ var DEPTH = 3;
 var POINT = 0;
 var VECTOR = 1;
 var COLOR = 1;
+var LEVEL = 1;
 var MISC = 2;
 var PIE = 3;
 var TYPE = 0;
@@ -36,8 +37,9 @@ function createRenderer(mode) {
 
   var options = {
     dimensions: [WIDTH, HEIGHT],
-    debug: true,
+    debug: false,
     graphical: true,
+    hardcodeConstants: true,
     constants: {
       height: HEIGHT,
       width: WIDTH,
@@ -72,6 +74,7 @@ function rayTracing(camera, lights, objects) {
   var POINT = 0;
   var VECTOR = 1;
   var COLOR = 1;
+  var LEVEL = 1;
   var MISC = 2;
   var PIE = 3;
   var TYPE = 0;
@@ -124,140 +127,161 @@ function rayTracing(camera, lights, objects) {
     }
   }
 
-  t = x * this.constants.pixelWidth - this.constants.halfWidth;
-  var xCompX = this.constants.vpRightX * t;
-  var xCompY = this.constants.vpRightY * t;
-  var xCompZ = this.constants.vpRightZ * t;
+  var antiAliasingLevel = camera[MISC][LEVEL];
+  var numRays = antiAliasingLevel * antiAliasingLevel;
 
-  t = y * this.constants.pixelHeight - this.constants.halfHeight;
-  var yCompX = this.constants.vpUpX * t;
-  var yCompY = this.constants.vpUpY * t;
-  var yCompZ = this.constants.vpUpZ * t;
+  var splitPixelWidth = this.constants.pixelWidth / antiAliasingLevel;
+  var splitPixelHeight = this.constants.pixelHeight / antiAliasingLevel;
 
-  tempX = this.constants.eyeVectorX + xCompX + yCompX;
-  tempY = this.constants.eyeVectorY + xCompY + yCompY;
-  tempZ = this.constants.eyeVectorZ + xCompZ + yCompZ;
-  temp = length(tempX, tempY, tempZ);
-
-  var rayPointX = camera[POINT][X];
-  var rayPointY = camera[POINT][Y];
-  var rayPointZ = camera[POINT][Z];
-  var rayVectorX = tempX / temp;
-  var rayVectorY = tempY / temp;
-  var rayVectorZ = tempZ / temp;
-  var specular = 1;
-
-  for (var i = 0; i < this.constants.depth; i++) {
-
-    var dist;
-    var closest = Infinity;
-    var objectIdx = -1;
-
-    for (n = 0; n < this.constants.objectCount; n++) {
-      dist = sphereIntersection(rayPointX, rayPointY, rayPointZ, rayVectorX, rayVectorY, rayVectorZ, objects[n][POINT][X], objects[n][POINT][Y], objects[n][POINT][Z], objects[n][MISC][RADIUS]);
-
-      if (dist < closest) {
-        closest = dist;
-        objectIdx = n;
-      }
-    }
-
-    var idx = objectIdx;
-
-    if (idx != -1) {
-      a = 255;
-
-      tempX = rayVectorX * closest;
-      tempY = rayVectorY * closest;
-      tempZ = rayVectorZ * closest;
-      var pointAtTimeX = rayPointX + tempX;
-      var pointAtTimeY = rayPointY + tempY;
-      var pointAtTimeZ = rayPointZ + tempZ;
-
-      tempX = pointAtTimeX - objects[idx][POINT][X];
-      tempY = pointAtTimeY - objects[idx][POINT][Y];
-      tempZ = pointAtTimeZ - objects[idx][POINT][Z];
-      temp = length(tempX, tempY, tempZ);
-
-      var sphereNormalX = tempX / temp;
-      var sphereNormalY = tempY / temp;
-      var sphereNormalZ = tempZ / temp;
-
-      var colorR = objects[idx][COLOR][R];
-      var colorG = objects[idx][COLOR][G];
-      var colorB = objects[idx][COLOR][B];
-
-      var lambert = 0;
-
-      for (n = 0; n < this.constants.lightCount; n++) {
-        tempX = pointAtTimeX - lights[n][X];
-        tempY = pointAtTimeY - lights[n][Y];
-        tempZ = pointAtTimeZ - lights[n][Z];
-        temp = length(tempX, tempY, tempZ);
-
-        var lightVectorX = tempX / temp;
-        var lightVectorY = tempY / temp;
-        var lightVectorZ = tempZ / temp;
-
-        closest = Infinity;
-        objectIdx = -1;
-
-        for (m = 0; m < this.constants.objectCount; m++) {
-          dist = sphereIntersection(lights[n][X], lights[n][Y], lights[n][Z], lightVectorX, lightVectorY, lightVectorZ, objects[m][POINT][X], objects[m][POINT][Y], objects[m][POINT][Z], objects[m][MISC][RADIUS]);
-
-          if (dist > 0 && dist < closest) {
-            closest = dist;
-            objectIdx = m;
-          }
-        }
-
-        if (objectIdx === idx) {
-          tempX = lights[n][X] - pointAtTimeX;
-          tempY = lights[n][Y] - pointAtTimeY;
-          tempZ = lights[n][Z] - pointAtTimeZ;
-
-          temp = length(tempX, tempY, tempZ);
-          tempX = tempX / temp;
-          tempY = tempY / temp;
-          tempZ = tempZ / temp;
-
-          var contribution = dotProduct(tempX, tempY, tempZ, sphereNormalX, sphereNormalY, sphereNormalZ);
-          if (contribution > 0) {
-            lambert += contribution;
-          }
-        }
-      }
-
-      lambert = Math.min(1, lambert);
-
-      t = lambert * objects[idx][PIE][DIFFUSE] * specular + objects[idx][PIE][AMBIENT] * specular;
-      r += colorR * t;
-      g += colorG * t;
-      b += colorB * t;
-
-      specular = objects[idx][PIE][SPECULAR];
-
-      rayPointX = pointAtTimeX;
-      rayPointY = pointAtTimeY;
-      rayPointZ = pointAtTimeZ;
-
-      t = 2 * dotProduct(rayVectorX, rayVectorY, rayVectorZ, sphereNormalX, sphereNormalY, sphereNormalZ);
-      rayVectorX = sphereNormalX * t - rayVectorX;
-      rayVectorY = sphereNormalY * t - rayVectorY;
-      rayVectorZ = sphereNormalZ * t - rayVectorZ;
-
-    } else {
+  for (var i = 0; i < 8; i++) {
+    if (i >= antiAliasingLevel) {
       break;
     }
+
+    for (var j = 0; j < 8; j++) {
+      if (j >= antiAliasingLevel) {
+        break;
+      }
+
+      t = (x - 1) * this.constants.pixelWidth - this.constants.halfWidth + i * splitPixelWidth;
+      var xCompX = this.constants.vpRightX * t;
+      var xCompY = this.constants.vpRightY * t;
+      var xCompZ = this.constants.vpRightZ * t;
+
+      t = (y - 1) * this.constants.pixelHeight - this.constants.halfHeight + j * splitPixelHeight;
+      var yCompX = this.constants.vpUpX * t;
+      var yCompY = this.constants.vpUpY * t;
+      var yCompZ = this.constants.vpUpZ * t;
+
+      tempX = this.constants.eyeVectorX + xCompX + yCompX;
+      tempY = this.constants.eyeVectorY + xCompY + yCompY;
+      tempZ = this.constants.eyeVectorZ + xCompZ + yCompZ;
+      temp = length(tempX, tempY, tempZ);
+
+      var rayPointX = camera[POINT][X];
+      var rayPointY = camera[POINT][Y];
+      var rayPointZ = camera[POINT][Z];
+      var rayVectorX = tempX / temp;
+      var rayVectorY = tempY / temp;
+      var rayVectorZ = tempZ / temp;
+
+      var specular = 1;
+
+      for (var k = 0; k < this.constants.depth; k++) {
+
+        var dist;
+        var closest = Infinity;
+        var objectIdx = -1;
+
+        for (n = 0; n < this.constants.objectCount; n++) {
+          dist = sphereIntersection(rayPointX, rayPointY, rayPointZ, rayVectorX, rayVectorY, rayVectorZ, objects[n][POINT][X], objects[n][POINT][Y], objects[n][POINT][Z], objects[n][MISC][RADIUS]);
+
+          if (dist < closest) {
+            closest = dist;
+            objectIdx = n;
+          }
+        }
+
+        var idx = objectIdx;
+
+        if (idx != -1) {
+          a = 255;
+
+          tempX = rayVectorX * closest;
+          tempY = rayVectorY * closest;
+          tempZ = rayVectorZ * closest;
+          var pointAtTimeX = rayPointX + tempX;
+          var pointAtTimeY = rayPointY + tempY;
+          var pointAtTimeZ = rayPointZ + tempZ;
+
+          tempX = pointAtTimeX - objects[idx][POINT][X];
+          tempY = pointAtTimeY - objects[idx][POINT][Y];
+          tempZ = pointAtTimeZ - objects[idx][POINT][Z];
+          temp = length(tempX, tempY, tempZ);
+
+          var sphereNormalX = tempX / temp;
+          var sphereNormalY = tempY / temp;
+          var sphereNormalZ = tempZ / temp;
+
+          var colorR = objects[idx][COLOR][R];
+          var colorG = objects[idx][COLOR][G];
+          var colorB = objects[idx][COLOR][B];
+
+          var lambert = 0;
+
+          for (n = 0; n < this.constants.lightCount; n++) {
+            tempX = pointAtTimeX - lights[n][X];
+            tempY = pointAtTimeY - lights[n][Y];
+            tempZ = pointAtTimeZ - lights[n][Z];
+            temp = length(tempX, tempY, tempZ);
+
+            var lightVectorX = tempX / temp;
+            var lightVectorY = tempY / temp;
+            var lightVectorZ = tempZ / temp;
+
+            closest = Infinity;
+            objectIdx = -1;
+
+            for (m = 0; m < this.constants.objectCount; m++) {
+              dist = sphereIntersection(lights[n][X], lights[n][Y], lights[n][Z], lightVectorX, lightVectorY, lightVectorZ, objects[m][POINT][X], objects[m][POINT][Y], objects[m][POINT][Z], objects[m][MISC][RADIUS]);
+
+              if (dist > 0 && dist < closest) {
+                closest = dist;
+                objectIdx = m;
+              }
+            }
+
+            if (objectIdx === idx) {
+              tempX = lights[n][X] - pointAtTimeX;
+              tempY = lights[n][Y] - pointAtTimeY;
+              tempZ = lights[n][Z] - pointAtTimeZ;
+
+              temp = length(tempX, tempY, tempZ);
+              tempX = tempX / temp;
+              tempY = tempY / temp;
+              tempZ = tempZ / temp;
+
+              var contribution = dotProduct(tempX, tempY, tempZ, sphereNormalX, sphereNormalY, sphereNormalZ);
+              if (contribution > 0) {
+                lambert += contribution;
+              }
+            }
+          }
+
+          lambert = Math.min(1, lambert);
+
+          t = lambert * objects[idx][PIE][DIFFUSE] * specular + objects[idx][PIE][AMBIENT] * specular;
+          r += colorR * t;
+          g += colorG * t;
+          b += colorB * t;
+
+          specular = objects[idx][PIE][SPECULAR];
+
+          rayPointX = pointAtTimeX;
+          rayPointY = pointAtTimeY;
+          rayPointZ = pointAtTimeZ;
+
+          t = 2 * dotProduct(rayVectorX, rayVectorY, rayVectorZ, sphereNormalX, sphereNormalY, sphereNormalZ);
+          rayVectorX = sphereNormalX * t - rayVectorX;
+          rayVectorY = sphereNormalY * t - rayVectorY;
+          rayVectorZ = sphereNormalZ * t - rayVectorZ;
+
+        } else {
+          break;
+        }
+      }
+    }
   }
+
+  r /= numRays;
+  g /= numRays;
+  b /= numRays;
 
   this.color(r / 255, g / 255, b / 255, a / 255);
 }
 
 var cpu = createRenderer('cpu');
 var gpu = createRenderer('gpu');
-cpu(camera, lights, objects);
-gpu(camera, lights, objects);
 
 function render() {
   var kernel = usingGPU ? gpu : cpu;
@@ -368,18 +392,29 @@ function flip(e) {
   }
 }
 
-function play() {
-  playing = true;
-  tick();
+function toggle(e) {
+  if (playing) {
+    $(e.target).text("Play");
+    $(e.target).removeClass("btn-danger");
+    $(e.target).addClass("btn-success");
+    playing = false;
+  } else {
+    $(e.target).text("Stop");
+    $(e.target).removeClass("btn-success");
+    $(e.target).addClass("btn-danger");
+    playing = true;
+    tick();
+  }
 }
 
-function stop() {
-  playing = false;
+function antiAliasing(e) {
+  camera[MISC][LEVEL] = $(e.target).find('input').val();
 }
 
 render();
 
 $('#switch').click(flip);
-$('#play').click(play);
-$('#stop').click(stop);
+$('#toggle').click(toggle);
+$('.btn-antialiasing').click(antiAliasing);
+
 $('#footer').text('Copyright © 2014-' + new Date().getFullYear() + ' Liu Xinan');

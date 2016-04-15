@@ -1,6 +1,17 @@
+body {
+  background-color: black;
+  color: white;
+}
+
+hr {
+  border-color: white;
+}
+
 .container {
+  background-color: black;
   min-width: 940px;
   padding: 1.5rem 0;
+  color: white;
 }
 
 @media (min-width: 544px) {
@@ -24,6 +35,8 @@
 }
 
 .jumbotron {
+  background-color: black;
+  color: white;
   text-align: center;
   border-bottom: .05rem solid #e5e5e5;
 }

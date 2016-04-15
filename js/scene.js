@@ -14,7 +14,7 @@ var camera = [
   ],
   [
     45,     // field of view
-    0,      // dummy
+    1,      // anti-aliasing level (1 = None)
     0       // dummy
   ]
 ];
@@ -22,7 +22,7 @@ var camera = [
 var lights = [
   [
     -10,    // point.x
-    10,    // point.y
+    10,     // point.y
     20      // point.z
   ]
 ];
@@ -54,10 +54,10 @@ var objects = [
     [
       1.5,      // point.x
       -2.598076211353316,      // point.y
-      0       // point.z
+      0         // point.z
     ],
     [
-      64,    // color.x
+      64,     // color.x
       128,    // color.y
       128     // color.z
     ],
@@ -76,11 +76,11 @@ var objects = [
     [
       1.5,     // point.x
       2.598076211353316,      // point.y
-      0      // point.z
+      0        // point.z
     ],
     [
       128,    // color.x
-      64,    // color.y
+      64,     // color.y
       192     // color.z
     ],
     [
@@ -98,7 +98,7 @@ var objects = [
     [
       -3,     // point.x
       0,      // point.y
-      0      // point.z
+      0       // point.z
     ],
     [
       192,    // color.x
