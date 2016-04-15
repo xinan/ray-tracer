@@ -15,7 +15,7 @@ var camera = [
   [
     45,     // field of view
     1,      // anti-aliasing level (1 = None)
-    0       // dummy
+    0       // number of bounces
   ]
 ];
 

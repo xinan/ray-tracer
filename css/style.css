@@ -9,14 +9,14 @@ hr {
 
 .container {
   background-color: black;
-  min-width: 940px;
+  min-width: 1140px;
   padding: 1.5rem 0;
   color: white;
 }
 
 @media (min-width: 544px) {
   .container {
-    min-width: 940px;
+    min-width: 1140px;
   }
 
   .jumbotron {
@@ -26,7 +26,17 @@ hr {
 
 @media (min-width: 921px) {
   .container {
-    min-width: 940px;
+    min-width: 1140px;
+  }
+
+  .jumbotron {
+    padding: 2rem 1rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    min-width: 1140px;
   }
 
   .jumbotron {

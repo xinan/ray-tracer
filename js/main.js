@@ -1,11 +1,8 @@
-var WIDTH = 800;
-var HEIGHT = 600;
-var DEPTH = 3;
-
 var POINT = 0;
 var VECTOR = 1;
 var COLOR = 1;
 var LEVEL = 1;
+var DEPTH = 2;
 var MISC = 2;
 var PIE = 3;
 var TYPE = 0;
@@ -20,30 +17,34 @@ var R = 0;
 var G = 1;
 var B = 2;
 
-var eyeVector = normalize(subtract(camera[1], camera[0])),
-    vpRight = normalize(crossProduct(eyeVector, VECTOR_UP)),
-    vpUp = normalize(crossProduct(vpRight, eyeVector)),
-    fovRadians = Math.PI * (camera[2][0] / 2) / 180,
-    heightWidthRatio = HEIGHT / WIDTH,
-    halfWidth = Math.tan(fovRadians),
-    halfHeight = heightWidthRatio * halfWidth,
-    cameraWidth = halfWidth * 2,
-    cameraHeight = halfHeight * 2,
-    pixelWidth = cameraWidth / (WIDTH - 1),
-    pixelHeight = cameraHeight / (HEIGHT - 1);
+var width = 192;
+var height = 144;
 
 function createRenderer(mode) {
+  var eyeVector = normalize(subtract(camera[1], camera[0])),
+      vpRight = normalize(crossProduct(eyeVector, VECTOR_UP)),
+      vpUp = normalize(crossProduct(vpRight, eyeVector)),
+      fovRadians = Math.PI * (camera[2][0] / 2) / 180,
+      heightWidthRatio = height / width,
+      halfWidth = Math.tan(fovRadians),
+      halfHeight = heightWidthRatio * halfWidth,
+      cameraWidth = halfWidth * 2,
+      cameraHeight = halfHeight * 2,
+      pixelWidth = cameraWidth / (width - 1),
+      pixelHeight = cameraHeight / (height - 1);
+
   var gpu = new GPU();
 
   var options = {
-    dimensions: [WIDTH, HEIGHT],
+    dimensions: [width, height],
     debug: false,
     graphical: true,
     hardcodeConstants: true,
     constants: {
-      height: HEIGHT,
-      width: WIDTH,
-      depth: DEPTH,
+      height: height,
+      width: width,
+      maxBounces: 4,
+      maxAliasing: 8,
       lightCount: lights.length,
       objectCount: objects.length,
       eyeVectorX: eyeVector[0],
@@ -75,6 +76,7 @@ function rayTracing(camera, lights, objects) {
   var VECTOR = 1;
   var COLOR = 1;
   var LEVEL = 1;
+  var DEPTH = 2;
   var MISC = 2;
   var PIE = 3;
   var TYPE = 0;
@@ -129,16 +131,17 @@ function rayTracing(camera, lights, objects) {
 
   var antiAliasingLevel = camera[MISC][LEVEL];
   var numRays = antiAliasingLevel * antiAliasingLevel;
+  var depth = camera[MISC][DEPTH];
 
   var splitPixelWidth = this.constants.pixelWidth / antiAliasingLevel;
   var splitPixelHeight = this.constants.pixelHeight / antiAliasingLevel;
 
-  for (var i = 0; i < 8; i++) {
+  for (var i = 0; i < this.constants.maxAliasing; i++) {
     if (i >= antiAliasingLevel) {
       break;
     }
 
-    for (var j = 0; j < 8; j++) {
+    for (var j = 0; j < this.constants.maxAliasing; j++) {
       if (j >= antiAliasingLevel) {
         break;
       }
@@ -166,8 +169,12 @@ function rayTracing(camera, lights, objects) {
       var rayVectorZ = tempZ / temp;
 
       var specular = 1;
+      var idx = -1;
 
-      for (var k = 0; k < this.constants.depth; k++) {
+      for (var k = 0; k < this.constants.maxBounces; k++) {
+        if (k > depth) {
+          break;
+        }
 
         var dist;
         var closest = Infinity;
@@ -182,7 +189,11 @@ function rayTracing(camera, lights, objects) {
           }
         }
 
-        var idx = objectIdx;
+        if (idx === objectIdx) {
+          break;
+        }
+
+        idx = objectIdx;
 
         if (idx != -1) {
           a = 255;
@@ -288,6 +299,8 @@ function render() {
   kernel(camera, lights, objects);
   var parent = document.getElementById('parent');
   var canvas = document.getElementsByTagName('canvas')[0];
+  var newCanvas = kernel.getCanvas();
+  newCanvas.style.cssText = 'width: 960px; height: 720px;';
   parent.replaceChild(kernel.getCanvas(), canvas);
 }
 
@@ -419,6 +432,20 @@ function flop() {
 
 function antiAliasing(e) {
   camera[MISC][LEVEL] = $(e.target).find('input').val();
+  render();
+}
+
+function changeSize(e) {
+  width = $(e.target).find('input').val();
+  height = width / 4 * 3;
+  cpu = createRenderer('cpu');
+  gpu = createRenderer('gpu');
+  render();
+}
+
+function changeBounces(e) {
+  camera[MISC][DEPTH] = $(e.target).find('input').val();
+  render();
 }
 
 render();
@@ -426,5 +453,7 @@ render();
 $('#switch').click(flip);
 $('#toggle').click(toggle);
 $('.btn-antialiasing').click(antiAliasing);
+$('.btn-resolution').click(changeSize);
+$('.btn-bounces').click(changeBounces);
 
-$('#footer').text('Copyright © 2014-' + new Date().getFullYear() + ' Liu Xinan');
+$('#footer').text('Copyright \u00A9 2014-' + new Date().getFullYear() + ' Liu Xinan');

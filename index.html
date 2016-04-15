@@ -19,26 +19,67 @@
           <button type="button" class="btn btn-info btn-large" id="fps">0 fps</button>
         </div>
         <div class="btn-group" role="group" data-toggle="buttons">
-          <button type="button" class="btn btn-warning btn-large">Anti-Aliasing</button>
-          <label class="btn btn-warning btn-large btn-antialiasing active">
-            <input type="radio" name="options" value="1" checked> None
+          <button type="button" class="btn btn-warning btn-large">Resolution</button>
+          <label class="btn btn-warning btn-large btn-resolution active">
+            <input type="radio" name="size" value="192" checked> 144p
           </label>
-          <label class="btn btn-warning btn-large btn-antialiasing">
-            <input type="radio" name="options" value="2"> 2x
+          <label class="btn btn-warning btn-large btn-resolution">
+            <input type="radio" name="size" value="320" checked> 240p
           </label>
-          <label class="btn btn-warning btn-large btn-antialiasing">
-            <input type="radio" name="options" value="4"> 4x
+          <label class="btn btn-warning btn-large btn-resolution">
+            <input type="radio" name="size" value="480" checked> 360p
           </label>
-          <label class="btn btn-warning btn-large btn-antialiasing">
-            <input type="radio" name="options" value="8"> 8x
+          <label class="btn btn-warning btn-large btn-resolution">
+            <input type="radio" name="size" value="640"> 480p
+          </label>
+          <label class="btn btn-warning btn-large btn-resolution">
+            <input type="radio" name="size" value="960"> 720p
           </label>
         </div>
         <div class="btn-group pull-xs-right" role="group">
           <button type="button" class="btn btn-success btn-large" id='toggle'>Play</button>
         </div>
       </div>
+      <div class="col-xs-12">
+        <div class="btn-group pull-xs-left" role="group" data-toggle="buttons">
+          <button type="button" class="btn btn-warning btn-large">Anti-Aliasing</button>
+          <label class="btn btn-warning btn-large btn-antialiasing active">
+            <input type="radio" name="level" value="1" checked> Off
+          </label>
+          <label class="btn btn-warning btn-large btn-antialiasing">
+            <input type="radio" name="level" value="2"> 2x
+          </label>
+          <label class="btn btn-warning btn-large btn-antialiasing">
+            <input type="radio" name="level" value="4"> 4x
+          </label>
+          <label class="btn btn-warning btn-large btn-antialiasing">
+            <input type="radio" name="level" value="6"> 6x
+          </label>
+          <label class="btn btn-warning btn-large btn-antialiasing">
+            <input type="radio" name="level" value="8"> 8x
+          </label>
+        </div>
+        <div class="btn-group pull-xs-right" role="group" data-toggle="buttons">
+          <button type="button" class="btn btn-warning btn-large">Bounces</button>
+          <label class="btn btn-warning btn-large btn-bounces active">
+            <input type="radio" name="depth" value="0" checked> 0
+          </label>
+          <label class="btn btn-warning btn-large btn-bounces">
+            <input type="radio" name="depth" value="1"> 1
+          </label>
+          <label class="btn btn-warning btn-large btn-bounces">
+            <input type="radio" name="depth" value="2"> 2
+          </label>
+          <label class="btn btn-warning btn-large btn-bounces">
+            <input type="radio" name="depth" value="3"> 3
+          </label>
+          <label class="btn btn-warning btn-large btn-bounces">
+            <input type="radio" name="depth" value="4"> 4
+          </label>
+        </div>
+      </div>
       &nbsp;
-      <hr class="m-y-2">
+      <hr class="m-y-0">
       <canvas id='c'></canvas>
       &nbsp;
       <hr class="m-y-2">
