@@ -12,6 +12,12 @@ var RADIUS = 1;
 var SPECULAR = 0;
 var DIFFUSE = 1;
 var AMBIENT = 2;
+var X = 0;
+var Y = 1;
+var Z = 2;
+var R = 0;
+var G = 1;
+var B = 2;
 
 var eyeVector = normalize(subtract(camera[1], camera[0])),
     vpRight = normalize(crossProduct(eyeVector, VECTOR_UP)),
