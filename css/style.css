@@ -1,15 +1,21 @@
-body {
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-}
-
 .container {
-  min-width: 720px;
+  min-width: 940px;
+  padding: 1.5rem 0;
 }
 
 @media (min-width: 544px) {
   .container {
-    min-width: 720px;
+    min-width: 940px;
+  }
+
+  .jumbotron {
+    padding: 2rem 1rem;
+  }
+}
+
+@media (min-width: 921px) {
+  .container {
+    min-width: 940px;
   }
 
   .jumbotron {
