@@ -2,6 +2,17 @@ var WIDTH = 800;
 var HEIGHT = 600;
 var DEPTH = 3;
 
+var POINT = 0;
+var VECTOR = 1;
+var COLOR = 1;
+var MISC = 2;
+var PIE = 3;
+var TYPE = 0;
+var RADIUS = 1;
+var SPECULAR = 0;
+var DIFFUSE = 1;
+var AMBIENT = 2;
+
 var eyeVector = normalize(subtract(camera[1], camera[0])),
     vpRight = normalize(crossProduct(eyeVector, VECTOR_UP)),
     vpUp = normalize(crossProduct(vpRight, eyeVector)),
@@ -278,11 +289,11 @@ function tick() {
   planet1 += 0.1;
   planet2 += 0.2;
 
-  objects[1][0][0] = Math.sin(planet1) * 3.5;
-  objects[1][0][2] = -3 + (Math.cos(planet1) * 3.5);
+  objects[1][POINT][X] = Math.sin(planet1) * 3.5;
+  objects[1][POINT][Z] = -3 + (Math.cos(planet1) * 3.5);
 
-  objects[2][0][0] = Math.sin(planet2) * 4;
-  objects[2][0][2] = -3 + (Math.cos(planet2) * 4);
+  objects[2][POINT][X] = Math.sin(planet2) * 4;
+  objects[2][POINT][Z] = -3 + (Math.cos(planet2) * 4);
 
   FPS.updateFPS();
   render();
