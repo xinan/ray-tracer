@@ -87,7 +87,7 @@ function rayTracing(camera, lights, objects) {
   var B = 2;
 
   var x = this.thread.x;
-  var y = this.constants.height - this.thread.y - 1;
+  var y = this.thread.y;
   var Infinity = 99999999;
   var r = 0;
   var g = 0;
@@ -269,7 +269,8 @@ function render() {
 
 // A little fun magic
 var planet1 = 0,
-    planet2 = 0;
+    planet2 = 0,
+    planet3 = 0;
 
 var playing = false;
 var usingGPU = false;
@@ -292,14 +293,20 @@ var FPS = {
 };
 
 function tick() {
-  planet1 += 0.1;
-  planet2 += 0.2;
+  planet1 += Math.random() / 10;
+  planet2 += Math.random() / 10;
+  planet3 += Math.random() / 10;
 
-  objects[1][POINT][X] = Math.sin(planet1) * 3.5;
-  objects[1][POINT][Z] = -3 + (Math.cos(planet1) * 3.5);
+  objects[1][POINT][X] = Math.cos(planet1) * 1.5;
+  objects[1][POINT][Y] = -Math.cos(planet1) * 2.598076211353316;
+  objects[1][POINT][Z] = Math.sin(planet1) * 3;
 
-  objects[2][POINT][X] = Math.sin(planet2) * 4;
-  objects[2][POINT][Z] = -3 + (Math.cos(planet2) * 4);
+  objects[2][POINT][X] = Math.cos(planet2) * 1.5;
+  objects[2][POINT][Y] = Math.cos(planet2) * 2.598076211353316;
+  objects[2][POINT][Z] = -Math.sin(planet2) * 3;
+
+  objects[3][POINT][X] = -Math.cos(planet3) * 3;
+  objects[3][POINT][Z] = Math.sin(planet3) * 3;
 
   FPS.updateFPS();
   render();
@@ -334,3 +341,4 @@ render();
 $('#switch').click(flip);
 $('#play').click(play);
 $('#stop').click(stop);
+$('#footer').text('Copyright © 2014-' + new Date().getFullYear() + ' Liu Xinan');

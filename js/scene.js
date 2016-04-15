@@ -4,13 +4,13 @@ var SPHERE = 1;
 var camera = [
   [
     0,      // point.x
-    1.8,    // point.y
+    0,      // point.y
     10      // point.z
   ],
   [
     0,      // vector.x
-    3,      // vector.y
-    0       // vector.z
+    0,      // vector.y
+    3       // vector.z
   ],
   [
     45,     // field of view
@@ -21,8 +21,8 @@ var camera = [
 
 var lights = [
   [
-    -30,    // point.x
-    -10,    // point.y
+    -10,    // point.x
+    10,    // point.y
     20      // point.z
   ]
 ];
@@ -31,17 +31,17 @@ var objects = [
   [
     [
       0,      // point.x
-      3.5,    // point.y
-      -3      // point.z
+      0,      // point.y
+      0       // point.z
     ],
     [
-      155,    // color.x
-      200,    // color.y
-      155     // color.z
+      31,    // color.x
+      139,    // color.y
+      227     // color.z
     ],
     [
       SPHERE, // type
-      3,      // radius
+      2,      // radius
       0       // dummy
     ],
     [
@@ -52,14 +52,14 @@ var objects = [
   ],
   [
     [
-      -4,     // point.x
-      2,      // point.y
-      -1      // point.z
+      1.5,      // point.x
+      -2.598076211353316,      // point.y
+      0       // point.z
     ],
     [
-      155,    // color.x
-      155,    // color.y
-      155     // color.z
+      255,    // color.x
+      204,    // color.y
+      136     // color.z
     ],
     [
       SPHERE, // type
@@ -67,30 +67,52 @@ var objects = [
       0       // dummy
     ],
     [
-      0.1,    // specular
+      0.2,    // specular
       0.9,    // diffuse
-      0.0     // ambient
+      0.1     // ambient
     ]
   ],
   [
     [
-      -4,     // point.x
-      3,      // point.y
-      -1      // point.z
+      1.5,     // point.x
+      2.598076211353316,      // point.y
+      0      // point.z
     ],
     [
       255,    // color.x
-      255,    // color.y
-      255     // color.z
+      204,    // color.y
+      136     // color.z
     ],
     [
       SPHERE, // type
-      0.1,    // radius
+      0.2,    // radius
       0       // dummy
     ],
     [
       0.2,    // specular
-      0.7,    // diffuse
+      0.9,    // diffuse
+      0.1     // ambient
+    ]
+  ],
+  [
+    [
+      -3,     // point.x
+      0,      // point.y
+      0      // point.z
+    ],
+    [
+      255,    // color.x
+      204,    // color.y
+      136     // color.z
+    ],
+    [
+      SPHERE, // type
+      0.2,    // radius
+      0       // dummy
+    ],
+    [
+      0.2,    // specular
+      0.9,    // diffuse
       0.1     // ambient
     ]
   ]
