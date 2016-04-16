@@ -1,16 +1,35 @@
 // The Scene
 var SPHERE = 1;
 
+var POINT = 0;
+var VECTOR = 1;
+var COLOR = 1;
+var LEVEL = 1;
+var DEPTH = 2;
+var MISC = 2;
+var PIE = 3;
+var TYPE = 0;
+var RADIUS = 1;
+var SPECULAR = 0;
+var DIFFUSE = 1;
+var AMBIENT = 2;
+var X = 0;
+var Y = 1;
+var Z = 2;
+var R = 0;
+var G = 1;
+var B = 2;
+
 var camera = [
   [
     0,      // point.x
     0,      // point.y
-    10      // point.z
+    20      // point.z
   ],
   [
     0,      // vector.x
     0,      // vector.y
-    3       // vector.z
+    10       // vector.z
   ],
   [
     45,     // field of view

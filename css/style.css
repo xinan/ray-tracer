@@ -7,6 +7,11 @@ hr {
   border-color: white;
 }
 
+#beforeCanvas {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
 .container {
   background-color: black;
   min-width: 1140px;

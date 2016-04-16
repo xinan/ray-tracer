@@ -1,296 +1,3 @@
-var POINT = 0;
-var VECTOR = 1;
-var COLOR = 1;
-var LEVEL = 1;
-var DEPTH = 2;
-var MISC = 2;
-var PIE = 3;
-var TYPE = 0;
-var RADIUS = 1;
-var SPECULAR = 0;
-var DIFFUSE = 1;
-var AMBIENT = 2;
-var X = 0;
-var Y = 1;
-var Z = 2;
-var R = 0;
-var G = 1;
-var B = 2;
-
-var width = 192;
-var height = 144;
-
-function createRenderer(mode) {
-  var eyeVector = normalize(subtract(camera[1], camera[0])),
-      vpRight = normalize(crossProduct(eyeVector, VECTOR_UP)),
-      vpUp = normalize(crossProduct(vpRight, eyeVector)),
-      fovRadians = Math.PI * (camera[2][0] / 2) / 180,
-      heightWidthRatio = height / width,
-      halfWidth = Math.tan(fovRadians),
-      halfHeight = heightWidthRatio * halfWidth,
-      cameraWidth = halfWidth * 2,
-      cameraHeight = halfHeight * 2,
-      pixelWidth = cameraWidth / (width - 1),
-      pixelHeight = cameraHeight / (height - 1);
-
-  var gpu = new GPU();
-
-  var options = {
-    dimensions: [width, height],
-    debug: false,
-    graphical: true,
-    hardcodeConstants: true,
-    constants: {
-      height: height,
-      width: width,
-      maxBounces: 4,
-      maxAliasing: 8,
-      lightCount: lights.length,
-      objectCount: objects.length,
-      eyeVectorX: eyeVector[0],
-      eyeVectorY: eyeVector[1],
-      eyeVectorZ: eyeVector[2],
-      vpRightX: vpRight[0],
-      vpRightY: vpRight[1],
-      vpRightZ: vpRight[2],
-      vpUpX: vpUp[0],
-      vpUpY: vpUp[1],
-      vpUpZ: vpUp[2],
-      fovRadians: fovRadians,
-      heightWidthRatio: heightWidthRatio,
-      halfWidth: halfWidth,
-      halfHeight: halfHeight,
-      cameraWidth: cameraWidth,
-      cameraHeight: cameraHeight,
-      pixelWidth: pixelWidth,
-      pixelHeight: pixelHeight
-    },
-    mode: mode
-  };
-
-  return gpu.createKernel(rayTracing, options);
-}
-
-function rayTracing(camera, lights, objects) {
-  var POINT = 0;
-  var VECTOR = 1;
-  var COLOR = 1;
-  var LEVEL = 1;
-  var DEPTH = 2;
-  var MISC = 2;
-  var PIE = 3;
-  var TYPE = 0;
-  var RADIUS = 1;
-  var SPECULAR = 0;
-  var DIFFUSE = 1;
-  var AMBIENT = 2;
-  var X = 0;
-  var Y = 1;
-  var Z = 2;
-  var R = 0;
-  var G = 1;
-  var B = 2;
-
-  var x = this.thread.x;
-  var y = this.thread.y;
-  var Infinity = 99999999;
-  var r = 0;
-  var g = 0;
-  var b = 0;
-  var a = 0;
-  var t;
-  var n;
-  var m;
-  var tempX;
-  var tempY;
-  var tempZ;
-  var temp;
-
-  function dotProduct(ax, ay, az, bx, by, bz) {
-    return ax * bx + ay * by + az * bz;
-  }
-
-  function length(ax, ay, az) {
-    return Math.sqrt(ax * ax + ay * ay + az * az);
-  }
-
-  function sphereIntersection(rayPointX, rayPointY, rayPointZ, rayVectorX, rayVectorY, rayVectorZ, spherePointX, spherePointY, spherePointZ, sphereRadius) {
-    var eyeToCenterX = spherePointX - rayPointX;
-    var eyeToCenterY = spherePointY - rayPointY;
-    var eyeToCenterZ = spherePointZ - rayPointZ;
-    var v = eyeToCenterX * rayVectorX + eyeToCenterY * rayVectorY + eyeToCenterZ * rayVectorZ;
-    var eoDot = eyeToCenterX * eyeToCenterX + eyeToCenterY * eyeToCenterY + eyeToCenterZ * eyeToCenterZ;
-    var discriminant = (sphereRadius * sphereRadius) - eoDot + (v * v);
-
-    if (discriminant > 0) {
-      return v - Math.sqrt(discriminant);
-    } else {
-      return 99999999;
-    }
-  }
-
-  var antiAliasingLevel = camera[MISC][LEVEL];
-  var numRays = antiAliasingLevel * antiAliasingLevel;
-  var depth = camera[MISC][DEPTH];
-
-  var splitPixelWidth = this.constants.pixelWidth / antiAliasingLevel;
-  var splitPixelHeight = this.constants.pixelHeight / antiAliasingLevel;
-
-  for (var i = 0; i < this.constants.maxAliasing; i++) {
-    if (i >= antiAliasingLevel) {
-      break;
-    }
-
-    for (var j = 0; j < this.constants.maxAliasing; j++) {
-      if (j >= antiAliasingLevel) {
-        break;
-      }
-
-      t = (x - 1) * this.constants.pixelWidth - this.constants.halfWidth + i * splitPixelWidth;
-      var xCompX = this.constants.vpRightX * t;
-      var xCompY = this.constants.vpRightY * t;
-      var xCompZ = this.constants.vpRightZ * t;
-
-      t = (y - 1) * this.constants.pixelHeight - this.constants.halfHeight + j * splitPixelHeight;
-      var yCompX = this.constants.vpUpX * t;
-      var yCompY = this.constants.vpUpY * t;
-      var yCompZ = this.constants.vpUpZ * t;
-
-      tempX = this.constants.eyeVectorX + xCompX + yCompX;
-      tempY = this.constants.eyeVectorY + xCompY + yCompY;
-      tempZ = this.constants.eyeVectorZ + xCompZ + yCompZ;
-      temp = length(tempX, tempY, tempZ);
-
-      var rayPointX = camera[POINT][X];
-      var rayPointY = camera[POINT][Y];
-      var rayPointZ = camera[POINT][Z];
-      var rayVectorX = tempX / temp;
-      var rayVectorY = tempY / temp;
-      var rayVectorZ = tempZ / temp;
-
-      var specular = 1;
-      var idx = -1;
-
-      for (var k = 0; k < this.constants.maxBounces; k++) {
-        if (k > depth) {
-          break;
-        }
-
-        var dist;
-        var closest = Infinity;
-        var objectIdx = -1;
-
-        for (n = 0; n < this.constants.objectCount; n++) {
-          dist = sphereIntersection(rayPointX, rayPointY, rayPointZ, rayVectorX, rayVectorY, rayVectorZ, objects[n][POINT][X], objects[n][POINT][Y], objects[n][POINT][Z], objects[n][MISC][RADIUS]);
-
-          if (dist < closest) {
-            closest = dist;
-            objectIdx = n;
-          }
-        }
-
-        if (idx === objectIdx) {
-          break;
-        }
-
-        idx = objectIdx;
-
-        if (idx != -1) {
-          a = 255;
-
-          tempX = rayVectorX * closest;
-          tempY = rayVectorY * closest;
-          tempZ = rayVectorZ * closest;
-          var pointAtTimeX = rayPointX + tempX;
-          var pointAtTimeY = rayPointY + tempY;
-          var pointAtTimeZ = rayPointZ + tempZ;
-
-          tempX = pointAtTimeX - objects[idx][POINT][X];
-          tempY = pointAtTimeY - objects[idx][POINT][Y];
-          tempZ = pointAtTimeZ - objects[idx][POINT][Z];
-          temp = length(tempX, tempY, tempZ);
-
-          var sphereNormalX = tempX / temp;
-          var sphereNormalY = tempY / temp;
-          var sphereNormalZ = tempZ / temp;
-
-          var colorR = objects[idx][COLOR][R];
-          var colorG = objects[idx][COLOR][G];
-          var colorB = objects[idx][COLOR][B];
-
-          var lambert = 0;
-
-          for (n = 0; n < this.constants.lightCount; n++) {
-            tempX = pointAtTimeX - lights[n][X];
-            tempY = pointAtTimeY - lights[n][Y];
-            tempZ = pointAtTimeZ - lights[n][Z];
-            temp = length(tempX, tempY, tempZ);
-
-            var lightVectorX = tempX / temp;
-            var lightVectorY = tempY / temp;
-            var lightVectorZ = tempZ / temp;
-
-            closest = Infinity;
-            objectIdx = -1;
-
-            for (m = 0; m < this.constants.objectCount; m++) {
-              dist = sphereIntersection(lights[n][X], lights[n][Y], lights[n][Z], lightVectorX, lightVectorY, lightVectorZ, objects[m][POINT][X], objects[m][POINT][Y], objects[m][POINT][Z], objects[m][MISC][RADIUS]);
-
-              if (dist > 0 && dist < closest) {
-                closest = dist;
-                objectIdx = m;
-              }
-            }
-
-            if (objectIdx === idx) {
-              tempX = lights[n][X] - pointAtTimeX;
-              tempY = lights[n][Y] - pointAtTimeY;
-              tempZ = lights[n][Z] - pointAtTimeZ;
-
-              temp = length(tempX, tempY, tempZ);
-              tempX = tempX / temp;
-              tempY = tempY / temp;
-              tempZ = tempZ / temp;
-
-              var contribution = dotProduct(tempX, tempY, tempZ, sphereNormalX, sphereNormalY, sphereNormalZ);
-              if (contribution > 0) {
-                lambert += contribution;
-              }
-            }
-          }
-
-          lambert = Math.min(1, lambert);
-
-          t = lambert * objects[idx][PIE][DIFFUSE] * specular + objects[idx][PIE][AMBIENT] * specular;
-          r += colorR * t;
-          g += colorG * t;
-          b += colorB * t;
-
-          specular = objects[idx][PIE][SPECULAR];
-
-          rayPointX = pointAtTimeX;
-          rayPointY = pointAtTimeY;
-          rayPointZ = pointAtTimeZ;
-
-          t = 2 * dotProduct(rayVectorX, rayVectorY, rayVectorZ, sphereNormalX, sphereNormalY, sphereNormalZ);
-          rayVectorX = sphereNormalX * t - rayVectorX;
-          rayVectorY = sphereNormalY * t - rayVectorY;
-          rayVectorZ = sphereNormalZ * t - rayVectorZ;
-
-        } else {
-          break;
-        }
-      }
-    }
-  }
-
-  r /= numRays;
-  g /= numRays;
-  b /= numRays;
-
-  this.color(r / 255, g / 255, b / 255, a / 255);
-}
-
 var cpu = createRenderer('cpu');
 var gpu = createRenderer('gpu');
 
@@ -324,6 +31,9 @@ var earthR = 0,
 var playing = false;
 var usingGPU = true;
 var throttle = true;
+var speed = 10;
+var zoom = 1;
+var rawCamera = [camera[POINT][X], camera[POINT][Y], camera[POINT][Z]];
 var fps = $('#fps');
 fps.click(flop);
 
@@ -345,22 +55,22 @@ var FPS = {
 };
 
 function tick() {
-  earthR += Math.random() / 51;
-  earthG += Math.random() / 47;
-  earthB += Math.random() / 43;
-  moon1R += Math.random() / 41;
-  moon1G += Math.random() / 37;
-  moon1B += Math.random() / 31;
-  moon2R += Math.random() / 29;
-  moon2G += Math.random() / 23;
-  moon2B += Math.random() / 19;
-  moon3R += Math.random() / 17;
-  moon3G += Math.random() / 13;
-  moon3G += Math.random() / 11;
+  earthR += Math.random() / 510 * speed;
+  earthG += Math.random() / 470 * speed;
+  earthB += Math.random() / 430 * speed;
+  moon1R += Math.random() / 410 * speed;
+  moon1G += Math.random() / 370 * speed;
+  moon1B += Math.random() / 310 * speed;
+  moon2R += Math.random() / 290 * speed;
+  moon2G += Math.random() / 230 * speed;
+  moon2B += Math.random() / 190 * speed;
+  moon3R += Math.random() / 170 * speed;
+  moon3G += Math.random() / 130 * speed;
+  moon3G += Math.random() / 110 * speed;
 
-  moon1 += Math.random() / 11;
-  moon2 += Math.random() / 13;
-  moon3 += Math.random() / 17;
+  moon1 += Math.random() / 110 * speed;
+  moon2 += Math.random() / 130 * speed;
+  moon3 += Math.random() / 170 * speed;
 
   objects[0][COLOR][R] = (Math.sin(earthR)) * 64 + 128;
   objects[0][COLOR][G] = (Math.cos(earthG)) * 64 + 128;
@@ -448,6 +158,144 @@ function changeBounces(e) {
   render();
 }
 
+var cos1 = Math.cos(0.0174533);
+var sin1 = Math.sin(0.0174533);
+var cos_1 = Math.cos(-0.0174533);
+var sin_1 = Math.sin(-0.0174533);
+
+var n = 10, m = 1;
+
+function updateCamera() {
+  camera[POINT][X] = rawCamera[X] * zoom;
+  camera[POINT][Z] = rawCamera[Z] * zoom;
+  camera[VECTOR][X] = camera[POINT][X] / 2;
+  camera[VECTOR][Z] = camera[POINT][Z] / 2;
+}
+
+function left() {
+  var x = cos1 * rawCamera[X] - sin1 * rawCamera[Z];
+  var z = sin1 * rawCamera[X] + cos1 * rawCamera[Z];
+  rawCamera[X] = x;
+  rawCamera[Z] = z;
+
+  updateCamera();
+
+  render();
+
+  n -= 1;
+  if (n > 0) {
+    requestAnimationFrame(left);
+  }
+}
+
+function right() {
+  var x = cos_1 * rawCamera[X] - sin_1 * rawCamera[Z];
+  var z = sin_1 * rawCamera[X] + cos_1 * rawCamera[Z];
+  rawCamera[X] = x;
+  rawCamera[Z] = z;
+
+  updateCamera();
+
+  render();
+
+  n -= 1;
+  if (n > 0) {
+    requestAnimationFrame(right);
+  }
+}
+
+function rotateLeft() {
+  n = 10;
+  left();
+}
+
+function rotateRight() {
+  n = 10;
+  right();
+}
+
+function resetCamera() {
+  n = Math.acos(dotProduct(rawCamera, [0, 0, 20]) / (length(rawCamera) * length([0, 0, 20]))) * 180 / Math.PI;
+
+  if (n < 5) {
+    rawCamera[X] = 0;
+    rawCamera[Z] = 20;
+    updateCamera();
+
+    render();
+  } else {
+    var normal = crossProduct(rawCamera, [0, 0, 20]);
+    if (normal[Y] < 0) {
+      left();
+    } else {
+      right();
+    }
+  }
+}
+
+function decreaseSpeed() {
+  if (speed > 1) {
+    speed--;
+  }
+}
+
+function increaseSpeed() {
+  if (speed < 20) {
+    speed++;
+  }
+}
+
+function resetSpeed() {
+  speed = 10;
+}
+
+function enlarge() {
+  if (zoom > 0.5) {
+    zoom -= 0.01;
+    updateCamera();
+    render();
+  }
+
+  if (zoom > m) {
+    requestAnimationFrame(enlarge);
+  }
+}
+
+function shrink() {
+  if (zoom < 1.5) {
+    zoom += 0.01;
+    updateCamera();
+    render();
+  }
+
+  if (zoom < m) {
+    requestAnimationFrame(shrink);
+  }
+}
+
+function zoomIn() {
+  if (zoom > 0.5) {
+    m = zoom - 0.1;
+    enlarge();
+  }
+}
+
+function zoomOut() {
+  if (zoom < 1.5) {
+    m = zoom + 0.1;
+    shrink();
+  }
+}
+
+function resetZoom() {
+  m = 1;
+  if (zoom > m) {
+    enlarge();
+  } else if (zoom < m) {
+    shrink();
+  }
+}
+
 render();
 
 $('#switch').click(flip);
@@ -455,4 +303,13 @@ $('#toggle').click(toggle);
 $('.btn-antialiasing').click(antiAliasing);
 $('.btn-resolution').click(changeSize);
 $('.btn-bounces').click(changeBounces);
+$('#rotateLeft').click(rotateLeft);
+$('#rotateRight').click(rotateRight);
+$('#resetCamera').click(resetCamera);
+$('#decreaseSpeed').click(decreaseSpeed);
+$('#resetSpeed').click(resetSpeed);
+$('#increaseSpeed').click(increaseSpeed);
+$('#zoomIn').click(zoomIn);
+$('#zoomOut').click(zoomOut);
+$('#resetZoom').click(resetZoom);
 $('button').tooltip();
