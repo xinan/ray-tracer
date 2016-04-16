@@ -14,6 +14,15 @@ hr {
   color: white;
 }
 
+a {
+  color: white;
+  text-decoration: underline;
+}
+
+a:hover {
+  color: white;
+}
+
 @media (min-width: 544px) {
   .container {
     min-width: 1140px;
