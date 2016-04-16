@@ -455,6 +455,7 @@ $('#toggle').click(toggle);
 $('.btn-antialiasing').click(antiAliasing);
 $('.btn-resolution').click(changeSize);
 $('.btn-bounces').click(changeBounces);
+$('button').tooltip();
 
 var year = new Date().getFullYear();
 $('#footer').text('Copyright \u00A9 2016' + (year !== 2016 ? '-' + year : '' ) + ' Liu Xinan');
