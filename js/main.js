@@ -12,21 +12,21 @@ function render() {
 }
 
 // A little fun magic
-var earthR = 0,
-    earthG = 0,
-    earthB = 0,
-    moon1 = 0,
-    moon1R = 0,
-    moon1G = 0,
-    moon1B = 0,
-    moon2 = 0,
-    moon2R = 0,
-    moon2G = 0,
-    moon2B = 0,
-    moon3 = 0,
-    moon3R = 0,
-    moon3G = 0,
-    moon3B = 0;
+var earthR = 0;
+var earthG = 0;
+var earthB = 0;
+var moon1 = 0;
+var moon1R = 0;
+var moon1G = 0;
+var moon1B = 0;
+var moon2 = 0;
+var moon2R = 0;
+var moon2G = 0;
+var moon2B = 0;
+var moon3 = 0;
+var moon3R = 0;
+var moon3G = 0;
+var moon3B = 0;
 
 var playing = false;
 var usingGPU = true;
@@ -55,6 +55,7 @@ var FPS = {
 };
 
 function tick() {
+  // Randomly change the colours of the spheres
   earthR += Math.random() / 510 * speed;
   earthG += Math.random() / 470 * speed;
   earthB += Math.random() / 430 * speed;
@@ -68,10 +69,12 @@ function tick() {
   moon3G += Math.random() / 130 * speed;
   moon3G += Math.random() / 110 * speed;
 
+  // Move the sphere at a slow random speed
   moon1 += Math.random() / 110 * speed;
   moon2 += Math.random() / 130 * speed;
   moon3 += Math.random() / 170 * speed;
 
+  // Calculate the next colour of the spheres
   objects[0][COLOR][R] = (Math.sin(earthR)) * 64 + 128;
   objects[0][COLOR][G] = (Math.cos(earthG)) * 64 + 128;
   objects[0][COLOR][B] = (-Math.cos(earthB)) * 64 + 128;
@@ -88,6 +91,7 @@ function tick() {
   objects[3][COLOR][G] = (Math.sin(moon3G)) * 64 + 128;
   objects[3][COLOR][B] = (-Math.sin(moon3B)) * 64 + 128;
 
+  // Calculate the new position of the rotating spheres
   objects[1][POINT][X] = Math.cos(moon1) * 1.5;
   objects[1][POINT][Y] = -Math.cos(moon1) * 2.598076211353316;
   objects[1][POINT][Z] = Math.sin(moon1) * 3;
