@@ -63,6 +63,7 @@ function rayTracing(camera, lights, objects) {
   var x = this.thread.x;
   var y = this.thread.y;
   var Infinity = 99999999;
+  var JND = 0.1;
   var r = 0;
   var g = 0;
   var b = 0;
@@ -191,91 +192,94 @@ function rayTracing(camera, lights, objects) {
 
         idx = objectIdx;
 
-        if (idx != -1) {
-          a = 255;
+        if (idx === -1) {
+          break;
+        }
+        a = 255;
 
-          tempX = rayVectorX * closest;
-          tempY = rayVectorY * closest;
-          tempZ = rayVectorZ * closest;
-          var pointAtTimeX = rayPointX + tempX;
-          var pointAtTimeY = rayPointY + tempY;
-          var pointAtTimeZ = rayPointZ + tempZ;
+        tempX = rayVectorX * closest;
+        tempY = rayVectorY * closest;
+        tempZ = rayVectorZ * closest;
+        var pointAtTimeX = rayPointX + tempX;
+        var pointAtTimeY = rayPointY + tempY;
+        var pointAtTimeZ = rayPointZ + tempZ;
 
-          tempX = pointAtTimeX - objects[idx][POINT][X];
-          tempY = pointAtTimeY - objects[idx][POINT][Y];
-          tempZ = pointAtTimeZ - objects[idx][POINT][Z];
+        tempX = pointAtTimeX - objects[idx][POINT][X];
+        tempY = pointAtTimeY - objects[idx][POINT][Y];
+        tempZ = pointAtTimeZ - objects[idx][POINT][Z];
+        temp = length(tempX, tempY, tempZ);
+
+        var sphereNormalX = tempX / temp;
+        var sphereNormalY = tempY / temp;
+        var sphereNormalZ = tempZ / temp;
+
+        var colorR = objects[idx][COLOR][R];
+        var colorG = objects[idx][COLOR][G];
+        var colorB = objects[idx][COLOR][B];
+
+        var lambert = 0;
+
+        for (n = 0; n < this.constants.lightCount; n++) {
+          tempX = pointAtTimeX - lights[n][X];
+          tempY = pointAtTimeY - lights[n][Y];
+          tempZ = pointAtTimeZ - lights[n][Z];
           temp = length(tempX, tempY, tempZ);
 
-          var sphereNormalX = tempX / temp;
-          var sphereNormalY = tempY / temp;
-          var sphereNormalZ = tempZ / temp;
+          var lightVectorX = tempX / temp;
+          var lightVectorY = tempY / temp;
+          var lightVectorZ = tempZ / temp;
 
-          var colorR = objects[idx][COLOR][R];
-          var colorG = objects[idx][COLOR][G];
-          var colorB = objects[idx][COLOR][B];
+          closest = Infinity;
+          objectIdx = -1;
 
-          var lambert = 0;
+          for (m = 0; m < this.constants.objectCount; m++) {
+            dist = sphereIntersection(lights[n][X], lights[n][Y], lights[n][Z], lightVectorX, lightVectorY, lightVectorZ, objects[m][POINT][X], objects[m][POINT][Y], objects[m][POINT][Z], objects[m][MISC][RADIUS]);
 
-          for (n = 0; n < this.constants.lightCount; n++) {
-            tempX = pointAtTimeX - lights[n][X];
-            tempY = pointAtTimeY - lights[n][Y];
-            tempZ = pointAtTimeZ - lights[n][Z];
-            temp = length(tempX, tempY, tempZ);
-
-            var lightVectorX = tempX / temp;
-            var lightVectorY = tempY / temp;
-            var lightVectorZ = tempZ / temp;
-
-            closest = Infinity;
-            objectIdx = -1;
-
-            for (m = 0; m < this.constants.objectCount; m++) {
-              dist = sphereIntersection(lights[n][X], lights[n][Y], lights[n][Z], lightVectorX, lightVectorY, lightVectorZ, objects[m][POINT][X], objects[m][POINT][Y], objects[m][POINT][Z], objects[m][MISC][RADIUS]);
-
-              if (dist > 0 && dist < closest) {
-                closest = dist;
-                objectIdx = m;
-              }
-            }
-
-            if (objectIdx === idx) {
-              tempX = lights[n][X] - pointAtTimeX;
-              tempY = lights[n][Y] - pointAtTimeY;
-              tempZ = lights[n][Z] - pointAtTimeZ;
-
-              temp = length(tempX, tempY, tempZ);
-              tempX = tempX / temp;
-              tempY = tempY / temp;
-              tempZ = tempZ / temp;
-
-              var contribution = dotProduct(tempX, tempY, tempZ, sphereNormalX, sphereNormalY, sphereNormalZ);
-              if (contribution > 0) {
-                lambert += contribution;
-              }
+            if (dist > 0 && dist < closest) {
+              closest = dist;
+              objectIdx = m;
             }
           }
 
-          lambert = Math.min(1, lambert);
+          if (objectIdx === idx) {
+            tempX = lights[n][X] - pointAtTimeX;
+            tempY = lights[n][Y] - pointAtTimeY;
+            tempZ = lights[n][Z] - pointAtTimeZ;
 
-          t = lambert * objects[idx][PIE][DIFFUSE] * specular + objects[idx][PIE][AMBIENT] * specular;
-          r += colorR * t;
-          g += colorG * t;
-          b += colorB * t;
+            temp = length(tempX, tempY, tempZ);
+            tempX = tempX / temp;
+            tempY = tempY / temp;
+            tempZ = tempZ / temp;
 
-          specular = objects[idx][PIE][SPECULAR];
+            var contribution = dotProduct(tempX, tempY, tempZ, sphereNormalX, sphereNormalY, sphereNormalZ);
+            if (contribution > 0) {
+              lambert += contribution;
+            }
+          }
+        }
 
-          rayPointX = pointAtTimeX;
-          rayPointY = pointAtTimeY;
-          rayPointZ = pointAtTimeZ;
+        lambert = Math.min(1, lambert);
 
-          t = 2 * dotProduct(rayVectorX, rayVectorY, rayVectorZ, sphereNormalX, sphereNormalY, sphereNormalZ);
-          rayVectorX = sphereNormalX * t - rayVectorX;
-          rayVectorY = sphereNormalY * t - rayVectorY;
-          rayVectorZ = sphereNormalZ * t - rayVectorZ;
+        t = lambert * objects[idx][PIE][DIFFUSE] * specular + objects[idx][PIE][AMBIENT] * specular;
+        r += colorR * t;
+        g += colorG * t;
+        b += colorB * t;
 
-        } else {
+        if (t < JND) {
           break;
         }
+
+        specular = objects[idx][PIE][SPECULAR];
+
+        rayPointX = pointAtTimeX;
+        rayPointY = pointAtTimeY;
+        rayPointZ = pointAtTimeZ;
+
+        t = 2 * dotProduct(rayVectorX, rayVectorY, rayVectorZ, sphereNormalX, sphereNormalY, sphereNormalZ);
+        rayVectorX = sphereNormalX * t - rayVectorX;
+        rayVectorY = sphereNormalY * t - rayVectorY;
+        rayVectorZ = sphereNormalZ * t - rayVectorZ;
+
       }
     }
   }

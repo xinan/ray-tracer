@@ -29,7 +29,7 @@ var camera = [
   [
     0,      // vector.x
     0,      // vector.y
-    10       // vector.z
+    10      // vector.z
   ],
   [
     45,     // field of view
